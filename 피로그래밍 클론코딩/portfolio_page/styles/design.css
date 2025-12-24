@@ -457,7 +457,7 @@ body, a, button, input {
 
 /* 3. 활성화(Hover) 시 커지는 효과 */
 #custom_cursor.active {
-    transform: translate(-50%, -50%) scale(1.5); /* 1.5배로 확대 */
+    transform: translate(-50%, -50%) scale(1.8); /* 1.5배로 확대 */
     background-color: rgba(66, 248, 55, 0.3);    /* 투명해짐 */
     mix-blend-mode: difference; /* (선택사항) 글씨랑 겹칠 때 색 반전 효과 */
 }

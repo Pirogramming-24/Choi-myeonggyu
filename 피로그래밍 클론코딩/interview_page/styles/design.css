@@ -55,7 +55,7 @@ header {
 }
 .title_area h2 {
     position: absolute; left: 50%; transform: translateX(-50%);
-    font-size: 32px; font-weight: 700;
+    font-size: 25px; font-weight: 700;
 }
 .title_area .prev_link { font-size: 16px; color: #ccc; }
 
