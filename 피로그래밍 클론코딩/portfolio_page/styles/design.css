@@ -1,0 +1,463 @@
+@charset "utf-8";
+
+/* --- 1. 공통 레이아웃 및 배경 설정 --- */
+body {
+    background-color: black; /* 전체 배경 검은색 */
+    color: white;            /* 기본 글자색 흰색 */
+    /* 헤더가 고정(fixed)되면 그만큼 공간이 비므로 위쪽 여백 추가 */
+    padding-top: 80px;       
+}
+
+/* --- 2. Header 영역 스타일 --- */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+
+    width: 100%;
+    height: 80px;
+
+    /* [수정 포인트] */
+    /* 위쪽(시작)은 완전 검은색(불투명도 1) -> 아래쪽(끝)은 완전 투명(불투명도 0) */
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+
+    display: flex;
+    justify-content: center;
+    
+    /* 투명하게 사라지는 효과를 위해 테두리 선은 제거하는 게 더 자연스럽습니다 */
+    border-bottom: none; 
+}
+
+.header_inner {
+    width: 100%;
+    max-width: 1200px; /* PC 화면 기준 최대 너비 */
+    height: 100%;
+    padding: 0 20px;   /* 좌우 여백 */
+    
+    display: flex;
+    justify-content: space-between; /* 로고-왼쪽, 메뉴-오른쪽 */
+    align-items: center;            /* 수직 중앙 정렬 */
+}
+
+/* 로고 스타일 */
+.logo a {
+    display: block; /* 링크 영역 확보 */
+    height: 40px;   /* 높이 지정 */
+}
+
+.logo img {
+    height: 100%;   /* 부모 높이에 맞춤 */
+    width: auto;    /* 비율 유지 */
+}
+
+/* 네비게이션(GNB) 스타일 */
+.gnb ul {
+    display: flex;  /* 가로 배치 */
+    gap: 40px;      /* 메뉴 간격 */
+}
+
+/* --- [수정] 네비게이션 메뉴 스타일 --- */
+
+.gnb a {
+    /* [중요] transform(위로 이동)이 먹히려면 inline 요소는 안 됩니다. 
+       block이나 inline-block으로 바꿔줘야 합니다. */
+    display: inline-block; 
+    
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    
+    /* 색상 변화와 위치 이동 모두 부드럽게 */
+    transition: color 0.3s, transform 0.3s;
+}
+
+/* 마우스 올렸을 때 & 현재 활성화된 메뉴 */
+.gnb a:hover,
+.gnb li.active a {
+    color: #42f837; /* 형광 초록색 */
+    
+    /* [수정 포인트 1] 
+       font-weight: 700; 삭제! 
+       -> 글자가 뚱뚱해지면서 옆으로 늘어나는 현상을 막습니다. */
+       
+    /* [수정 포인트 2]
+       위로 3px 정도 올라가는 효과 추가 */
+    transform: translateY(-3px);
+    
+    /* (팁) 만약 굵어지는 느낌을 내고 싶지만 늘어나는 건 싫다면 
+       text-shadow를 살짝 주면 됩니다. (선택사항) */
+    text-shadow: 0 0 1px #42f837;
+}
+/* --- 3. Main 영역 스타일 --- */
+
+#portfolio_wrap {
+    width: 100%;
+    padding: 50px 0 100px; /* 상단 50px, 하단 100px 여백 */
+}
+
+/* 중앙 정렬 컨테이너 (헤더랑 라인 맞추기) */
+.inner {
+    width: 100%;
+    max-width: 1200px; /* 헤더랑 똑같이 */
+    margin: 0 auto;    /* 가운데 정렬 */
+    padding: 0 20px;   /* 좌우 여백 */
+}
+
+/* --- [수정] 기수 타이틀 (23기) 정렬 수정 --- */
+.title_area {
+    position: relative; /* 자식 요소의 기준점 */
+    display: flex;
+    justify-content: flex-end; /* 내부 요소(22기 링크)를 오른쪽 끝으로 보냄 */
+    align-items: center;       /* 수직 중앙 정렬 */
+    margin-bottom: 40px;
+    height: 40px;              /* 높이 확보 */
+}
+
+.title_area h2 {
+    position: absolute; /* 흐름에서 벗어나 독자적으로 위치 */
+    left: 50%;          /* 부모의 50% 지점(가운데)으로 이동 */
+    transform: translateX(-50%); /* 요소 크기의 절반만큼 왼쪽으로 당겨서 '진짜' 정중앙 맞춤 */
+    
+    font-size: 25px;    /* 원본처럼 폰트 좀 더 키움 */
+    font-weight: 700;
+    color: #fff;
+}
+
+.title_area .prev_link {
+    font-size: 16px;
+    color: #ccc;
+    z-index: 10; /* 혹시 겹치더라도 클릭 가능하게 */
+}
+/* --- 4. 프로젝트 리스트 (1단 리스트 형태) --- */
+.project_list {
+    display: flex;
+    flex-direction: column; /* 무조건 위아래로 쌓임 */
+    gap: 20px;              /* 카드 사이 간격 */
+}
+
+/* 개별 카드 (높이 축소) */
+.item {
+    display: flex;
+    background-color: #444;
+    border-radius: 12px;
+    overflow: hidden;
+    
+    /* [수정] 기존 220px -> 160px 로 높이를 확 줄였습니다 */
+    height: 140px; 
+    
+    transition: transform 0.3s ease;
+}
+
+.item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5); /* 붕 뜬 느낌 */
+}
+
+/* 왼쪽 이미지 영역 (흰색 배경) */
+.photo {
+    /* [수정] 기존 width: 280px; 에서 줄였습니다. */
+    width: 200px;           /* <-- 이 수치를 줄이면 네모가 작아집니다 */
+    
+    /* 아래 속성들은 그대로 유지합니다 */
+    height: 100%;           /* 높이 꽉 채우기 */
+    background-color: #fff; /* 로고가 잘 보이게 흰색 배경 */
+    flex-shrink: 0;         /* 화면 줄어도 찌그러지지 않음 */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.photo img {
+    max-width: 80%;         /* 로고 크기 적당히 */
+    max-height: 80%;
+    object-fit: contain;    /* 비율 유지하며 쏙 들어가게 */
+    
+    /* [호버 이펙트 2] 이미지 확대 */
+    transition: transform 0.3s; 
+}
+
+.item:hover .photo img {
+    transform: scale(1.1);  /* 1.1배 확대 */
+}
+
+/* 오른쪽 텍스트 영역 */
+.info {
+    flex: 1;                /* 남은 공간 다 차지 */
+    padding: 30px;          /* 내부 여백 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;/* 수직 중앙 정렬 */
+    position: relative;     /* 초록점 위치 기준 */
+}
+
+/* 제목 + 햄버거 버튼 줄 */
+.info_top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.info_top h3 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* --- [수정] 햄버거 아이콘 스타일 --- */
+.menu_icon {
+    width: 24px;
+    height: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 위, 중간, 아래로 쫙 벌려줌 */
+    cursor: none; /* 커서 효과를 위해 none */
+    
+    /* (디버깅용) 혹시 위치가 이상한지 확인하려면 아래 주석을 풀어보세요 */
+    /* border: 1px solid red; */
+}
+
+/* 선 3개 그리기 (이 부분이 없으면 아무것도 안 보임!) */
+.menu_icon span {
+    display: block;      /* 블록 요소로 만들기 (필수) */
+    width: 100%;         /* 너비 꽉 채우기 (24px) */
+    height: 2px;         /* 선 두께 */
+    background-color: #fff; /* ★중요★ 선 색깔: 흰색 */
+    border-radius: 2px;  /* 끝부분 둥글게 */
+    
+    transition: transform 0.3s; /* 찌그러짐 애니메이션 준비 */
+}
+
+/* [호버 효과] 카드가 호버되면 -> 햄버거 버튼이 찌그러짐 */
+.item:hover .menu_icon {
+    /* 가로(x)는 1.2배 늘리고, 세로(y)는 0.7배로 줄여서 납작하게 */
+    transform: scale(1.2, 0.7); 
+}
+
+/* 설명 글 */
+.desc {
+    font-size: 16px;
+    color: #eee;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+/* 팀원 이름 박스들 */
+.team {
+    display: flex;
+    flex-wrap: wrap; /* 줄 넘김 가능 */
+    gap: 8px;
+}
+
+.team span {
+    background-color: #666; /* 회색 뱃지 */
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #fff;
+}
+
+.team span.pm {
+    background-color: #3b82f6; /* PM 파란색 */
+    font-weight: 700;
+}
+
+/* --- 반응형 (350px 대응) --- */
+/* 화면이 좁아지면(모바일) -> 위아래 배치로 변경 */
+@media screen and (max-width: 768px) {
+    .item {
+        flex-direction: column; /* 위: 이미지, 아래: 텍스트 */
+        height: auto;           /* 높이 자동 조절 */
+    }
+    
+    .photo {
+        width: 100%;            /* 너비 꽉 채우기 */
+        height: 200px;          /* 높이 적당히 */
+    }
+    
+    .info {
+        width: 100%;
+        padding: 20px;
+    }
+}
+
+/* =========================================
+   [수정] Footer 스타일 (좌측 하단 이메일 배치)
+   ========================================= */
+footer {
+    background-color: #1a1a1a;
+    padding: 40px 0;
+    margin-top: 100px;
+    border-top: 1px solid #333;
+}
+
+footer .top {
+    margin-bottom: 20px;
+}
+footer .top a {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* 중단 레이아웃: Flex로 양끝 정렬 */
+footer .middle {
+    display: flex;
+    justify-content: space-between; /* 왼쪽 그룹 - 오른쪽 그룹 벌리기 */
+    align-items: flex-end; /* 바닥 라인 맞춤 (선택사항) */
+    padding-bottom: 30px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #444;
+}
+
+/* 왼쪽 그룹 (아이콘 + 이메일) */
+.footer_left_group {
+    display: flex;
+    flex-direction: column; /* 위아래로 쌓기 */
+    gap: 15px; /* 아이콘과 이메일 사이 간격 */
+}
+
+/* 아이콘들 감싸는 박스 */
+.icons {
+    display: flex;
+    gap: 15px;
+}
+
+/* [수정] 아이콘 (이모지 = 텍스트) 스타일 */
+.sns_icon {
+    /* img 태그가 아니므로 font-size로 크기를 조절합니다 */
+    font-size: 30px; 
+    
+    /* 텍스트이므로 밑줄 제거 */
+    text-decoration: none; 
+    
+    /* 호버 효과를 위한 준비 */
+    transition: opacity 0.3s, transform 0.2s;
+    
+    /* (선택) 이모지라서 기본 컬러는 유지되지만, 
+       혹시 폰트 아이콘을 쓸 경우를 대비해 색상 지정 */
+    color: #fff; 
+}
+
+/* [수정] 아이콘 호버 효과 */
+.sns_icon:hover {
+    opacity: 0.6; /* 흐려짐 유지 */
+    
+    /* [중요] scale(크기)과 translateY(이동)를 동시에 줍니다! */
+    transform: scale(1.1) translateY(-3px); 
+}
+/* [수정] 이메일 링크 스타일 */
+.email_link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #ccc;
+    text-decoration: none; 
+    
+    /* 중요: 커서가 반응할 수 있는 영역 확보 */
+    padding: 5px 0; 
+    
+    /* [수정 1] 색상뿐만 아니라 위치 이동(transform)도 부드럽게 */
+    transition: color 0.3s, transform 0.3s;
+}
+
+.email_link:hover {
+    color: #fff; /* 글자 밝게 */
+    
+    /* [수정 2] 위로 3px 올라가는 효과 추가 */
+    transform: translateY(-3px);
+}
+/* 오른쪽 그룹 (링크들) */
+.footer_right_group {
+    /* 필요하다면 마진 추가 */
+}
+
+/* --- Footer 링크들에 '위로 떠오르는 효과' 적용 --- */
+
+/* 1. 하단 메뉴 링크들 (Home | About Us ...) */
+.links a {
+    display: inline-block; /* [중요] 이게 있어야 움직임(transform)이 먹힙니다 */
+    margin: 0 5px;
+    color: #ccc;
+    text-decoration: none;
+    
+    /* 부드러운 움직임 설정 */
+    transition: color 0.3s, transform 0.3s;
+}
+
+.links a:hover {
+    color: #fff; /* 글자 밝게 */
+    transform: translateY(-3px); /* [추가] 위로 3px 이동 */
+}
+
+/* 2. 상단 '회칙' 링크 (PIROGRAMMING 회칙 >) */
+footer .top a {
+    display: inline-block; /* [중요] */
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    
+    transition: color 0.3s, transform 0.3s;
+}
+
+footer .top a:hover {
+    color: #42f837; /* (선택) 호버 시 초록색 포인트 */
+    transform: translateY(-3px); /* [추가] 위로 3px 이동 */
+}
+/* 하단 카피라이트 */
+.bottom {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+/* 모바일 대응 (Footer) */
+@media screen and (max-width: 768px) {
+    footer .middle {
+        flex-direction: column; /* 좁아지면 세로로 배치 */
+        align-items: flex-start;
+        gap: 30px;
+    }
+}
+
+
+/* =========================================
+   [수정] 커서(Cursor) 스타일
+   ========================================= */
+
+/* 1. 기본 마우스 숨기기 */
+body, a, button, input {
+    cursor: none; 
+}
+
+/* 2. 커서 원형 디자인 */
+#custom_cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(66, 248, 55, 0.8); /* 기본 형광 초록 */
+    border-radius: 50%;
+    
+    pointer-events: none; /* 클릭 통과 (필수) */
+    z-index: 10000;       /* 최상단 */
+    
+    /* 중앙 정렬 */
+    transform: translate(-50%, -50%);
+    
+    /* 크기 변경 시 부드럽게 애니메이션 */
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+/* 3. 활성화(Hover) 시 커지는 효과 */
+#custom_cursor.active {
+    transform: translate(-50%, -50%) scale(1.5); /* 1.5배로 확대 */
+    background-color: rgba(66, 248, 55, 0.3);    /* 투명해짐 */
+    mix-blend-mode: difference; /* (선택사항) 글씨랑 겹칠 때 색 반전 효과 */
+}
