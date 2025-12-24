@@ -1,0 +1,226 @@
+@charset "utf-8";
+
+/* --- 기본 설정 --- */
+body {
+    background-color: black;
+    color: white;
+    padding-top: 80px; /* 헤더 공간 확보 */
+}
+
+/* --- Header --- */
+header {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 80px;
+    z-index: 1000;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+    display: flex; justify-content: center;
+}
+
+.header_inner {
+    width: 100%; max-width: 1200px;
+    padding: 0 20px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.logo img { height: 40px; width: auto; }
+
+.gnb ul { display: flex; gap: 40px; }
+.gnb a {
+    font-size: 16px; font-weight: 500;
+    transition: color 0.3s, transform 0.3s;
+}
+.gnb a:hover, .gnb li.active a {
+    color: #42f837;
+    transform: translateY(-3px);
+}
+
+
+/* --- Main (Interview Page) --- */
+#interview_wrap {
+    width: 100%;
+    padding: 50px 0 100px;
+}
+
+.inner {
+    width: 100%; max-width: 1200px;
+    margin: 0 auto; padding: 0 20px;
+}
+
+/* 기수 타이틀 (23기) */
+.title_area {
+    position: relative;
+    display: flex; justify-content: flex-end; align-items: center;
+    margin-bottom: 40px; height: 40px;
+}
+.title_area h2 {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-size: 32px; font-weight: 700;
+}
+.title_area .prev_link { font-size: 16px; color: #ccc; }
+
+
+/* [핵심] 인터뷰 Grid 레이아웃 (반응형) */
+.interview_grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* PC: 3열 */
+    gap: 20px;
+}
+
+/* 카드 스타일 */
+.interview_item {
+    background-color: #444;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 20px;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* [Hover 1] 카드 위로 2px 이동 */
+.interview_item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+/* 카드 상단 (프로필 + 정보 + 햄버거) */
+.card_top {
+    display: flex; align-items: flex-start; gap: 16px;
+}
+
+/* 프로필 이미지 (원형) */
+.profile_box {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    overflow: hidden; /* 이미지 넘침 방지 */
+    background-color: #fff;
+    flex-shrink: 0;
+}
+.profile_box img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.3s;
+}
+/* [Hover 2] 이미지 확대 */
+.interview_item:hover .profile_box img {
+    transform: scale(1.1);
+}
+
+/* 이름 및 뱃지 */
+.profile_info {
+    display: flex; flex-direction: column; gap: 6px;
+    flex: 1;
+}
+.profile_info .name { font-size: 18px; font-weight: 700; }
+/* --- [수정] 뱃지 스타일 (더 슬림하고 깔끔하게) --- */
+.badge {
+    display: inline-block; padding: 6px 8px; 
+    border-radius: 4px; font-size: 14px; font-weight: 700; color: #fff;
+    width: fit-content;
+    /* 3. 라인 높이 초기화: 박스 높이가 의도치 않게 커지는 것 방지 */
+    line-height: 1.2; 
+    
+    /* 이름과의 간격 */
+    margin-top: 4px; 
+}
+
+.badge.major {
+    background-color: #3b82f6; /* 전공자 파랑 */
+}
+
+/* [수정] 비전공자 색상 및 스타일 */
+.badge.non_major {
+    background-color: #ea580c; 
+}
+/* 햄버거 버튼 */
+.menu_icon {
+    width: 24px; height: 20px;
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+.menu_icon span {
+    display: block; width: 100%; height: 2px;
+    background-color: #fff; border-radius: 2px;
+    transition: transform 0.3s;
+}
+/* [Hover 3] 햄버거 찌그러짐 + 비틀기 */
+.interview_item:hover .menu_icon {
+    transform: scale(1.2, 0.7);
+}
+
+/* 하단 코멘트 */
+.card_bottom .comment {
+    font-size: 16px; line-height: 1.5; color: #eee;
+    word-break: keep-all;
+}
+
+
+/* --- 반응형 (3열 -> 2열 -> 1열) --- */
+@media screen and (max-width: 1024px) {
+    .interview_grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media screen and (max-width: 600px) {
+    .interview_grid { grid-template-columns: repeat(1, 1fr); }
+}
+
+
+/* --- Footer --- */
+footer {
+    background-color: #1a1a1a; padding: 40px 0;
+    margin-top: 100px; border-top: 1px solid #333;
+}
+footer .top { margin-bottom: 20px; }
+footer .top a { font-size: 14px; font-weight: 700; transition: transform 0.3s; }
+footer .top a:hover { transform: translateY(-3px); }
+
+footer .middle {
+    display: flex;
+    justify-content: space-between; /* 왼쪽 그룹 - 오른쪽 그룹 벌리기 */
+    
+    /* [수정] 기존 flex-end(바닥 정렬) -> center(중앙 정렬)로 변경 */
+    align-items: center; 
+    
+    padding-bottom: 30px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #444;
+}
+
+.footer_left_group { display: flex; flex-direction: column; gap: 15px; }
+.icons { display: flex; gap: 15px; }
+.sns_icon {
+    font-size: 30px; transition: opacity 0.3s, transform 0.3s;
+}
+.sns_icon:hover { opacity: 0.6; transform: scale(1.1) translateY(-3px); }
+
+.email_link {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; color: #ccc; padding: 5px 0;
+    transition: color 0.3s, transform 0.3s;
+}
+.email_link:hover { color: #fff; transform: translateY(-3px); }
+.mail_icon { font-size: 20px; }
+
+.links a {
+    font-size: 14px; color: #ccc; margin: 0 5px;
+    transition: color 0.3s, transform 0.3s;
+}
+.links a:hover { color: #fff; transform: translateY(-3px); }
+.bottom { text-align: center; font-size: 12px; color: #666; }
+
+@media screen and (max-width: 768px) {
+    footer .middle { flex-direction: column; align-items: flex-start; gap: 30px; }
+    .links { display: flex; flex-wrap: wrap; gap: 10px; }
+}
+
+
+/* --- Custom Cursor --- */
+#custom_cursor {
+    position: fixed; top: 0; left: 0;
+    width: 20px; height: 20px;
+    background-color: rgba(66, 248, 55, 0.8);
+    border-radius: 50%; pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+#custom_cursor.active {
+    transform: translate(-50%, -50%) scale(1.8);
+    background-color: rgba(66, 248, 55, 0.3);
+}

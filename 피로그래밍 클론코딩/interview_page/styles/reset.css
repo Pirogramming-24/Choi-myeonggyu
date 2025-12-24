@@ -1,0 +1,30 @@
+@charset "utf-8";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+* { box-sizing: border-box; }
+
+html, body, h1, h2, h3, h4, h5, h6, p, div, span, a, 
+header, footer, main, nav, ul, li, img, button {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 100%;
+    font: inherit;
+    vertical-align: baseline;
+    color: inherit;
+    font-family: 'Noto Sans KR', sans-serif;
+}
+
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section { display: block; }
+
+body { line-height: 1; }
+ol, ul { list-style: none; }
+blockquote, q { quotes: none; }
+table { border-collapse: collapse; border-spacing: 0; }
+a { text-decoration: none; display: inline-block; }
+button { background: none; cursor: pointer; }
+img { display: block; max-width: 100%; }
+
+/* 커서 숨기기 (커스텀 커서 사용 위함) */
+body, a, button, .interview_item { cursor: none; }
