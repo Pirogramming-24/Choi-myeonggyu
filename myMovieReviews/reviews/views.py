@@ -8,8 +8,31 @@ def main(request):
 
 # 기능 1: 리뷰 리스트
 def review_list(request):
+    # 1. 사용자가 주소창에 보낸 장르(genre) 가져오기 (없으면 None)
+    genre_query = request.GET.get('genre')
+    
+    # 2. 일단 모든 리뷰를 최신순으로 가져옵니다.
     reviews = Review.objects.all().order_by('-created_at')
-    return render(request, 'review_list.html', {'reviews': reviews})
+
+    # 3. 만약 특정 장르를 선택했다면? -> 그 장르만 남기고 필터링
+    if genre_query:
+        reviews = reviews.filter(genre=genre_query)
+
+    # 4. 화면에 뿌려줄 장르 목록 (forms.py에 썼던 것과 똑같아야 합니다!)
+    genres = [
+        '액션 영화', '모험 영화', '예술 영화', '코미디 영화', '다큐멘터리 영화', '드라마 영화',
+        '교육 영화', '서사 영화', '실험 영화', '엑스플로이테이션 영화', '판타지 영화', '누아르 영화',
+        '공포 영화', '멈블코어', '뮤지컬 영화', '미스터리 영화', '로맨스 영화', '일상물',
+        '애니메이션', '드라마'
+    ]
+
+    context = {
+        'reviews': reviews,
+        'genres': genres,
+        'selected_genre': genre_query, # 현재 선택된 장르가 뭔지 화면에 알려줌
+    }
+    
+    return render(request, 'review_list.html', context)
 
 # 기능 4: 리뷰 디테일
 def review_detail(request, pk):

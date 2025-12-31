@@ -24,7 +24,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('reviews/', include("reviews.urls")), # 기존 코드 유지
-    path('', views.main), # 빈 문자열('')은 메인 주소를 의미합니다.
+    path('', views.main, name='main'), # 빈 문자열('')은 메인 주소를 의미합니다.
 ]
 
 # 이미지 URL 설정을 추가 (개발 모드일 때만 작동)

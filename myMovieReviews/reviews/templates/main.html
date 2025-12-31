@@ -2,15 +2,76 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>나만의 영화 기록</title>
+    <title>My Movie Log</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa; /* 전체 배경색 통일 */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-container {
+            background-color: white;
+            padding: 50px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        h1 span { color: #007bff; } /* 포인트 컬러 */
+
+        p {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .btn-start {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 50px; /* 둥근 버튼 */
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn-start:hover {
+            background-color: #0056b3;
+            transform: translateY(-3px); /* 살짝 떠오르는 효과 */
+        }
+    </style>
 </head>
 <body>
-    <h1>🎬 My Movie Log</h1>
-    <p>나만의 영화 기록 사이트에 오신 것을 환영합니다.</p>
-    
-    <a href="/reviews/">내 리뷰 보러 가기</a>
-    
-    <br><br>
 
-    </body>
+    <div class="hero-container">
+        <h1>🎬 My <span>Movie</span> Log</h1>
+        <p>
+            내가 본 영화를 기록하고 추억하세요.<br>
+            감동적인 순간을 영원히 남길 수 있습니다.
+        </p>
+        
+        <a href="{% url 'review_list' %}" class="btn-start">
+            내 리뷰 보러 가기 🚀
+        </a>
+    </div>
+
+</body>
 </html>

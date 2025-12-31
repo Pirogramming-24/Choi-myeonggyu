@@ -1,36 +1,148 @@
-<h1 style="margin-bottom: 10px;">{{ review.title }}</h1>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ review.title }} - 상세 정보</title>
+    <style>
+        /* 전체 레이아웃 */
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
 
-{% if review.image %}
-    <div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 10px;">
-        <img src="{{ review.image.url }}" alt="{{ review.title }} 포스터" style="max-height: 500px; max-width: 100%; box-shadow: 0 0 10px rgba(255,255,255,0.2);">
+        /* [헤더] 기능 5: 클릭 시 리스트로 이동 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333; /* 검은색 */
+            text-decoration: none; /* 밑줄 제거 */
+        }
+        .logo span { color: #AB060F; } /* 포인트 컬러 */
+
+        /* [상단 영역] 제목과 수정 버튼(파란 네모) */
+        .top-section {
+            display: flex;
+            justify-content: space-between; /* 양쪽 끝 정렬 */
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .movie-title { font-size: 2.5em; margin: 0; }
+        
+        /* 수정 버튼 스타일 */
+        .btn-edit {
+            text-decoration: none;
+            color: #007bff;
+            border: 1px solid #007bff;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .btn-edit:hover { background-color: #f0f8ff; }
+
+        /* [정보 박스] */
+        .info-box {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            margin-bottom: 30px;
+        }
+        .info-box p { margin: 10px 0; font-size: 1.05em; }
+
+        /* [본문 영역] */
+        .content-area {
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-bottom: 50px;
+            min-height: 100px;
+        }
+
+        /* [하단 버튼 영역] 목록(빨간 네모) vs 삭제(초록 네모) */
+        .bottom-actions {
+            display: flex;
+            justify-content: space-between; /* 양쪽 끝 배치를 위해 필수 */
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .btn-list {
+            color: #666;
+            text-decoration: none;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #dc3545; /* 빨간색 계열 */
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1em;
+            padding: 0;
+        }
+        .btn-delete:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <a href="{% url 'review_list' %}" class="logo">
+                my <span>Movie</span> reviews
+            </a>
+            </div>
+
+        <div class="top-section">
+            <h1 class="movie-title">{{ review.title }}</h1>
+            
+            <a href="{% url 'review_update' review.pk %}" class="btn-edit">
+                ✏️ 수정하기
+            </a>
+        </div>
+
+        {% if review.image %}
+            <div style="margin-bottom: 30px;">
+                <img src="{{ review.image.url }}" alt="포스터" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            </div>
+        {% endif %}
+
+        <div class="info-box">
+            <h3 style="margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px;">📋 영화 정보</h3>
+            <p><strong>📅 개봉:</strong> {{ review.release_year }}년</p>
+            <p><strong>🎭 장르:</strong> {{ review.genre }}</p>
+            <p><strong>🎬 감독:</strong> {{ review.director }}</p>
+            <p><strong>👥 주연:</strong> {{ review.cast }}</p>
+            
+            <p><strong>⏱ 러닝타임:</strong> {{ review.runtime_display }}</p>
+            <p><strong>⭐ 내 별점:</strong> <span style="color: #f39c12;">★ {{ review.rating }}</span></p>
+        </div>
+
+        <h3>📝 리뷰 내용</h3>
+        <div class="content-area">
+            {{ review.content|linebreaks }}
+        </div>
+
+        <div class="bottom-actions">
+            <a href="{% url 'review_list' %}" class="btn-list">
+                ⬅️ 목록으로 돌아가기
+            </a>
+
+            <form action="{% url 'review_delete' review.pk %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="btn-delete" onclick="return confirm('정말 이 리뷰를 삭제하시겠습니까?')">
+                    🗑️ 삭제하기
+                </button>
+            </form>
+        </div>
     </div>
-{% endif %}
 
-<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
-    <h3 style="margin-top: 0;">📋 영화 정보</h3>
-    <p><strong>📅 개봉:</strong> {{ review.release_year }}년</p>
-    <p><strong>🎭 장르:</strong> {{ review.genre }}</p>
-    <p><strong>🎬 감독:</strong> {{ review.director }}</p>
-    <p><strong>👥 주연:</strong> {{ review.cast }}</p>
-    <p><strong>⏱ 러닝타임:</strong> {{ review.runtime }}분</p>
-    <p><strong>⭐ 내 별점:</strong> <span style="color: #f39c12; font-size: 1.2em;">★ {{ review.rating }}</span></p>
-</div>
-
-<hr>
-<h3>📝 리뷰 내용</h3>
-<div style="font-size: 1.1em; line-height: 1.6; margin-bottom: 30px;">
-    {{ review.content|linebreaks }}
-</div>
-
-<div style="margin-top: 20px;">
-    <a href="{% url 'review_update' review.pk %}" style="margin-right: 10px;">✏️ 수정하기</a>
-    
-    <form action="{% url 'review_delete' review.pk %}" method="POST" style="display:inline;">
-        {% csrf_token %}
-        <button type="submit" onclick="return confirm('정말 삭제하시겠습니까?')" style="color: red; cursor: pointer;">🗑️ 삭제하기</button>
-    </form>
-    
-    <span style="float: right;">
-        <a href="{% url 'review_list' %}">목록으로 돌아가기</a>
-    </span>
-</div>
+</body>
+</html>

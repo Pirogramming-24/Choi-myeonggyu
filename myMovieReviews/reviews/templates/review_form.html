@@ -1,8 +1,216 @@
-<h2>{% if action == '수정' %}리뷰 수정{% else %}새 리뷰 작성{% endif %}</h2>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>리뷰 작성</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">저장하기</button>
-</form>
-<a href="{% url 'review_list' %}">취소</a>
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            color: #333;
+        }
+        h2 span { color: #007bff; }
+
+        /* 폼 요소 스타일링 */
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 8px;
+            margin-top: 20px;
+        }
+
+        /* 입력창들을 예쁘게 꾸미기 */
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea,
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box; /* 패딩 포함 크기 계산 */
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        textarea { height: 200px; resize: vertical; }
+
+        /* 별점 스타일 (기존 코드 유지 + 정렬) */
+        .star-rating {
+            display: flex;
+            font-size: 2.5em;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .star {
+            color: #ddd;
+            margin-right: 5px;
+            transition: color 0.2s;
+        }
+        .star.hover { color: #555; }
+        .star.active { color: #f39c12; }
+
+        /* 버튼 그룹 */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 40px;
+        }
+
+        button[type="submit"] {
+            flex: 2; /* 저장 버튼을 더 넓게 */
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button[type="submit"]:hover { background-color: #0056b3; }
+
+        .btn-cancel {
+            flex: 1;
+            text-align: center;
+            text-decoration: none;
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-cancel:hover { background-color: #dee2e6; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>
+            {% if action == '수정' %}
+                🎬 리뷰 <span>수정</span>하기
+            {% else %}
+                📝 새 리뷰 <span>작성</span>하기
+            {% endif %}
+        </h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% for field in form %}
+                
+                {% if field.name == 'rating' %}
+                    {% elif field.name == 'runtime' %}
+                    <div style="margin-bottom: 10px;">
+                        <label>⭐ 별점</label>
+                        {{ form.rating }} <div class="star-rating" id="star-container">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+
+                    <label for="{{ field.id_for_label }}">⏱ 러닝타임 (분)</label>
+                    {{ field }}
+
+                {% elif field.name == 'image' %}
+                    <label for="{{ field.id_for_label }}">📷 포스터 이미지</label>
+                    {{ field }}
+
+                {% else %}
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                {% endif %}
+
+            {% endfor %}
+
+            <div class="btn-group">
+                {% if action == '수정' %}
+                    <a href="{% url 'review_detail' form.instance.pk %}" class="btn-cancel">취소</a>
+                {% else %}
+                    <a href="{% url 'review_list' %}" class="btn-cancel">취소</a>
+                {% endif %}
+                <button type="submit">저장하기</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // [별점 로직] 기존 코드와 동일합니다.
+        const stars = document.querySelectorAll('.star');
+        const ratingInput = document.querySelector('input[name="rating"]');
+
+        const currentRating = ratingInput.value;
+        if (currentRating) {
+            highlightStars(currentRating, 'active');
+        }
+
+        stars.forEach(star => {
+            star.addEventListener('mouseover', function() {
+                const value = this.getAttribute('data-value');
+                resetStars();
+                highlightStars(value, 'hover');
+            });
+
+            star.addEventListener('mouseout', function() {
+                resetStars();
+                if (ratingInput.value) {
+                    highlightStars(ratingInput.value, 'active');
+                }
+            });
+
+            star.addEventListener('click', function() {
+                const value = this.getAttribute('data-value');
+                ratingInput.value = value;
+                resetStars();
+                highlightStars(value, 'active');
+            });
+        });
+
+        function highlightStars(targetValue, className) {
+            stars.forEach(star => {
+                if (parseInt(star.getAttribute('data-value')) <= parseInt(targetValue)) {
+                    star.classList.add(className);
+                }
+            });
+        }
+
+        function resetStars() {
+            stars.forEach(star => {
+                star.classList.remove('hover', 'active');
+            });
+        }
+    </script>
+</body>
+</html>

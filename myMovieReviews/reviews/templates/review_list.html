@@ -6,8 +6,24 @@
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-write { background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
-        
+        /* [수정] 리뷰 작성 버튼 스타일 업그레이드 */
+        .btn-write { 
+            background-color: #007bff; 
+            color: white; 
+            padding: 10px 20px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            font-weight: bold;          /* 글씨 두껍게 */
+            transition: all 0.2s;       /* 부드러운 움직임 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 살짝 그림자 */
+        }
+
+        /* [추가] 마우스 올렸을 때 효과 */
+        .btn-write:hover {
+            background-color: #0056b3;  /* 색상이 진해짐 */
+            transform: translateY(-2px); /* 버튼이 살짝 위로 뜸 */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* 그림자도 깊어짐 */
+        }
         .review-card { 
             border: 1px solid #ddd; 
             padding: 15px; 
@@ -34,8 +50,74 @@
 <body>
 
     <div class="header">
-        <h1>🎬 내 영화 기록장</h1>
+        <h1>
+            <a href="{% url 'main' %}" style="text-decoration: none; color: inherit;">
+                🎬 내 영화 기록장
+            </a>
+        </h1>
+        
         <a href="{% url 'review_create' %}" class="btn-write">📝 리뷰 작성</a>
+    </div>
+
+    <style>
+        /* 가로 스크롤 되는 장르 필터 바 디자인 */
+        .genre-filter {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto; /* 내용이 많으면 가로 스크롤 */
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            white-space: nowrap; /* 줄바꿈 방지 */
+            scrollbar-width: none; /* 스크롤바 숨기기 (선택사항) */
+        }
+        /* 추천 1: 줄바꿈 스타일 (Tag Cloud) */
+        
+        .genre-filter {
+            display: flex;
+            flex-wrap: wrap;        /* 핵심: 공간이 부족하면 다음 줄로 내림 */
+            gap: 10px;
+            justify-content: center; /* 가운데 정렬 */
+            margin-bottom: 20px;
+            /* overflow-x, white-space 속성은 지웁니다 */
+        }
+
+/* 스크롤바 숨김 코드는 이제 필요 없으므로 삭제하거나 무시됩니다 */
+        .genre-btn {
+            padding: 8px 16px;
+            background-color: #f1f3f5;
+            color: #495057;
+            text-decoration: none;
+            border-radius: 20px; /* 둥근 알약 모양 */
+            font-size: 0.9em;
+            border: 1px solid #ddd;
+            transition: all 0.2s;
+        }
+        .genre-btn:hover {
+            background-color: #e9ecef;
+            transform: translateY(-2px); /* 살짝 떠오르는 효과 */
+        }
+        
+        /* 현재 선택된 장르 강조 스타일 (파란색) */
+        .genre-btn.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+    </style>
+
+    <div class="genre-filter">
+        <a href="{% url 'review_list' %}" 
+           class="genre-btn {% if not selected_genre %}active{% endif %}">
+           📂 전체
+        </a>
+
+        {% for genre in genres %}
+            <a href="?genre={{ genre }}" 
+               class="genre-btn {% if selected_genre == genre %}active{% endif %}">
+               {{ genre }}
+            </a>
+        {% endfor %}
     </div>
 
     <div class="review-list">
@@ -57,8 +139,9 @@
                     
                     <div class="review-meta">
                         <span>{{ review.release_year }}년</span> | 
-                        <span>{{ review.genre }}</span>
-                    </div>
+                        <span>{{ review.genre }}</span> | 
+                        <span>{{ review.runtime_display }}</span>
+                        </div>
                     <div class="review-meta">
                         <span class="star-rating">★ {{ review.rating }}</span>
                     </div>

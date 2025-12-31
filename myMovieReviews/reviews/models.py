@@ -16,3 +16,16 @@ class Review(models.Model):
 
     def __str__(self):
         return f"[{self.genre}] {self.title}"
+    
+    @property
+    def runtime_display(self):
+        if self.runtime is None:
+            return ""
+        
+        hours = self.runtime // 60  # 몫 (시간)
+        minutes = self.runtime % 60 # 나머지 (분)
+        
+        if hours > 0:
+            return f"{hours}시간 {minutes}분"
+        else:
+            return f"{minutes}분"
