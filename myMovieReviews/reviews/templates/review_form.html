@@ -1,0 +1,8 @@
+<h2>{% if action == '수정' %}리뷰 수정{% else %}새 리뷰 작성{% endif %}</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">저장하기</button>
+</form>
+<a href="{% url 'review_list' %}">취소</a>

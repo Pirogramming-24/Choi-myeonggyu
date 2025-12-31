@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>My Movie Reviews</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-write { background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+        
+        .review-card { 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 8px; 
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1); 
+            display: flex; /* 사진과 글을 옆으로 나란히 배치 */
+            gap: 20px;
+        }
+        .review-img {
+            width: 100px;
+            height: 140px;
+            object-fit: cover; /* 사진 비율 유지하면서 꽉 채우기 */
+            border-radius: 4px;
+            background-color: #eee;
+        }
+        .review-content { flex: 1; }
+        .review-title { font-size: 1.2em; font-weight: bold; margin-bottom: 5px; }
+        .review-title a { text-decoration: none; color: #333; }
+        .review-meta { color: #666; font-size: 0.9em; margin-top: 5px; }
+        .star-rating { color: #f39c12; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🎬 내 영화 기록장</h1>
+        <a href="{% url 'review_create' %}" class="btn-write">📝 리뷰 작성</a>
+    </div>
+
+    <div class="review-list">
+        {% for review in reviews %}
+            <div class="review-card">
+                <div class="review-thumb">
+                    {% if review.image %}
+                        <img src="{{ review.image.url }}" class="review-img" alt="포스터">
+                    {% else %}
+                        <div class="review-img" style="display:flex; align-items:center; justify-content:center; color:#999;">No Image</div>
+                    {% endif %}
+                </div>
+                <div class="review-content">
+                    <div class="review-title">
+                        <a href="{% url 'review_detail' review.pk %}">
+                            {{ review.title }}
+                        </a>
+                    </div>
+                    
+                    <div class="review-meta">
+                        <span>{{ review.release_year }}년</span> | 
+                        <span>{{ review.genre }}</span>
+                    </div>
+                    <div class="review-meta">
+                        <span class="star-rating">★ {{ review.rating }}</span>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p>아직 작성된 리뷰가 없습니다.</p>
+        {% endfor %}
+    </div>
+
+</body>
+</html>

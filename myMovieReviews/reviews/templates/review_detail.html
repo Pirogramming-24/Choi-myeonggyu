@@ -1,0 +1,36 @@
+<h1 style="margin-bottom: 10px;">{{ review.title }}</h1>
+
+{% if review.image %}
+    <div style="text-align: center; margin-bottom: 20px; background-color: #000; padding: 20px; border-radius: 10px;">
+        <img src="{{ review.image.url }}" alt="{{ review.title }} 포스터" style="max-height: 500px; max-width: 100%; box-shadow: 0 0 10px rgba(255,255,255,0.2);">
+    </div>
+{% endif %}
+
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px;">
+    <h3 style="margin-top: 0;">📋 영화 정보</h3>
+    <p><strong>📅 개봉:</strong> {{ review.release_year }}년</p>
+    <p><strong>🎭 장르:</strong> {{ review.genre }}</p>
+    <p><strong>🎬 감독:</strong> {{ review.director }}</p>
+    <p><strong>👥 주연:</strong> {{ review.cast }}</p>
+    <p><strong>⏱ 러닝타임:</strong> {{ review.runtime }}분</p>
+    <p><strong>⭐ 내 별점:</strong> <span style="color: #f39c12; font-size: 1.2em;">★ {{ review.rating }}</span></p>
+</div>
+
+<hr>
+<h3>📝 리뷰 내용</h3>
+<div style="font-size: 1.1em; line-height: 1.6; margin-bottom: 30px;">
+    {{ review.content|linebreaks }}
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'review_update' review.pk %}" style="margin-right: 10px;">✏️ 수정하기</a>
+    
+    <form action="{% url 'review_delete' review.pk %}" method="POST" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('정말 삭제하시겠습니까?')" style="color: red; cursor: pointer;">🗑️ 삭제하기</button>
+    </form>
+    
+    <span style="float: right;">
+        <a href="{% url 'review_list' %}">목록으로 돌아가기</a>
+    </span>
+</div>
