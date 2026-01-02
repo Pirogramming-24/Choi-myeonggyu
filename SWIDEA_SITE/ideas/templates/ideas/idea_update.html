@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}아이디어 수정{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 폼 컨테이너 */
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #2D2D2D;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        color: white;
+    }
+
+    .form-title {
+        text-align: center; margin-bottom: 30px; color: #A6E22E; font-size: 2rem;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    label { display: block; margin-bottom: 8px; font-weight: bold; color: #ddd; }
+
+    input[type="text"], input[type="number"], input[type="file"], textarea, select {
+        width: 100%; padding: 12px; background-color: #444; border: 1px solid #555;
+        border-radius: 8px; color: white; font-size: 1rem; outline: none; box-sizing: border-box;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #A6E22E; }
+
+    .btn-group { display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px; }
+    
+    .btn {
+        padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; 
+        font-weight: bold; cursor: pointer; text-decoration: none; text-align: center; color: white;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-submit { background-color: #A6E22E; color: #121212; }
+    .btn-cancel { background-color: #555; }
+    
+    /* 현재 이미지 링크 스타일 */
+    .current-img-link { color: #A6E22E; text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 10px; }
+    .current-img-link:hover { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="form-title">🛠️ 아이디어 수정하기</h1>
+
+    <form action="" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title">아이디어명</label>
+            <input type="text" name="title" id="title" value="{{ idea.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>현재 이미지</label>
+            {% if idea.image %}
+                <a href="{{ idea.image.url }}" target="_blank" class="current-img-link">
+                    📁 현재 등록된 이미지 확인하기
+                </a>
+            {% else %}
+                <span style="color: #888;">(이미지 없음)</span>
+            {% endif %}
+            
+            <label for="image" style="margin-top: 10px;">이미지 교체 (선택)</label>
+            <input type="file" name="image" id="image">
+        </div>
+
+        <div class="form-group">
+            <label for="content">설명</label>
+            <textarea name="content" id="content" cols="30" rows="5">{{ idea.content }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="interest">관심도</label>
+            <input type="number" name="interest" id="interest" value="{{ idea.interest }}" min="0" max="7">
+        </div>
+
+        <div class="form-group">
+            <label for="devtool">예상 개발툴</label>
+            <select name="devtool" id="devtool">
+                {% for tool in devtools %}
+                    <option value="{{ tool.pk }}" {% if tool.pk == idea.devtool.pk %}selected{% endif %}>
+                        {{ tool.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <a href="{% url 'ideas:idea_detail' idea.pk %}" class="btn btn-cancel">취소</a>
+            <button type="submit" class="btn btn-submit">수정 완료</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

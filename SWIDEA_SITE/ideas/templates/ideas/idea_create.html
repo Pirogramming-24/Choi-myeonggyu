@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}아이디어 등록{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 폼 전체 컨테이너 (카드 형태) */
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #2D2D2D;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        color: white;
+    }
+
+    /* 제목 스타일 */
+    .form-title {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #A6E22E; /* 연두색 포인트 */
+        font-size: 2rem;
+    }
+
+    /* 입력 그룹 간격 */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    /* 라벨 스타일 */
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #ddd;
+    }
+
+    /* 입력창 공통 스타일 (다크 모드) */
+    input[type="text"],
+    input[type="number"],
+    input[type="file"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 12px;
+        background-color: #444;
+        border: 1px solid #555;
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        outline: none;
+        box-sizing: border-box; /* 패딩 포함 너비 계산 */
+        transition: border-color 0.3s;
+    }
+
+    /* 입력창 포커스 효과 */
+    input:focus, textarea:focus, select:focus {
+        border-color: #A6E22E;
+    }
+
+    /* 버튼 그룹 */
+    .btn-group {
+        display: flex;
+        justify-content: flex-end; /* 오른쪽 정렬 */
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    /* 버튼 스타일 */
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    .btn:hover { opacity: 0.9; }
+
+    .btn-submit { background-color: #A6E22E; color: #121212; }
+    .btn-cancel { background-color: #555; color: white; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="form-title">💡 아이디어 등록</h1>
+
+    <form action="" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title">아이디어명</label>
+            <input type="text" name="title" id="title" placeholder="아이디어 이름을 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+            <label for="image">이미지 (선택)</label>
+            <input type="file" name="image" id="image">
+        </div>
+
+        <div class="form-group">
+            <label for="content">설명</label>
+            <textarea name="content" id="content" cols="30" rows="5" placeholder="아이디어에 대한 설명을 적어주세요"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="interest">관심도</label>
+            <input type="number" name="interest" id="interest" value="0" min="0" max="7">
+        </div>
+
+        <div class="form-group">
+            <label for="devtool">예상 개발툴</label>
+            <select name="devtool" id="devtool">
+                {% for tool in devtools %}
+                    <option value="{{ tool.pk }}">{{ tool.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="btn-group">
+            <a href="{% url 'ideas:idea_list' %}" class="btn btn-cancel">목록으로</a>
+            
+            <button type="submit" class="btn btn-submit">등록하기</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ idea.title }} - 상세정보{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 상세 페이지 컨테이너 (사이즈 축소) */
+    .detail-container {
+        max-width: 600px; /* 너비를 600px로 줄임 */
+        margin: 0 auto;
+        background-color: #2D2D2D;
+        padding: 30px; /* 패딩 축소 */
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        position: relative;
+        color: white;
+    }
+
+    /* 이미지 스타일 (높이 제한 강화) */
+    .detail-img {
+        width: 100%;
+        max-height: 250px; /* 높이를 250px로 제한 (한 눈에 들어오게) */
+        object-fit: contain; /* 비율 유지하며 안에 맞춤 */
+        background-color: #222; /* 빈 공간 배경색 더 어둡게 */
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #444;
+    }
+    .no-img-box {
+        width: 100%; height: 150px; /* 높이 축소 */
+        background-color: #333;
+        display: flex; justify-content: center; align-items: center;
+        color: #888; border-radius: 8px; margin-bottom: 20px;
+        font-weight: bold; font-size: 0.9rem;
+    }
+
+    /* [추가] 개발툴 링크 스타일 */
+    .devtool-link {
+        color: #A6E22E; /* 포인트 색상 (연두색) */
+        text-decoration: none;
+        font-weight: bold;
+        transition: color 0.2s;
+    }
+    .devtool-link:hover {
+        color: #fff; /* 마우스 올리면 흰색 */
+        text-decoration: underline;
+    }
+
+    /* 텍스트 스타일 */
+    h2 { margin-bottom: 5px; font-size: 1.8rem; color: #fff; text-align: center; } /* 제목 가운데 정렬, 크기 축소 */
+    
+    .meta-info { 
+        color: #aaa; margin-bottom: 15px; font-size: 0.9rem; 
+        border-bottom: 1px solid #444; padding-bottom: 15px; text-align: center; 
+    }
+    .meta-info span { margin: 0 10px; }
+    
+    .content-box { 
+        background-color: #333; padding: 15px; 
+        border-radius: 8px; color: #ddd; line-height: 1.6; margin-bottom: 20px;
+        font-size: 1rem; white-space: pre-wrap;
+        min-height: 100px; /* 최소 높이 설정 */
+    }
+
+    /* 찜하기 별 */
+    .star-btn-detail {
+        position: absolute; top: 30px; right: 30px;
+        font-size: 2rem; color: #555; cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .star-btn-detail:hover { transform: scale(1.1); }
+    .star-btn-detail.starred { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+
+    /* 관심도 컨트롤 (더 작게) */
+    .interest-area {
+        display: flex; align-items: center; justify-content: center;
+        background-color: #1E1E1E; padding: 10px 20px; border-radius: 40px;
+        width: fit-content; margin: 0 auto 20px auto; border: 1px solid #444;
+    }
+    .btn-interest { background: none; border: none; color: #aaa; font-size: 1.5rem; cursor: pointer; padding: 0 15px; transition: color 0.2s;}
+    .btn-interest:hover { color: white; transform: scale(1.2); }
+    .interest-label { font-size: 1rem; margin-right: 10px; color: #bbb; }
+    .interest-score { font-size: 1.5rem; font-weight: bold; color: #A6E22E; min-width: 30px; text-align: center; }
+
+    /* 하단 버튼 그룹 */
+    .btn-group { display: flex; gap: 10px; justify-content: center; }
+    .btn-action {
+        padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold;
+        text-decoration: none; color: white; font-size: 0.9rem; transition: opacity 0.2s;
+    }
+    .btn-action:hover { opacity: 0.9; }
+    
+    .btn-list { background-color: #555; }
+    .btn-edit { background-color: #2196F3; }
+    .btn-delete { background-color: #ff4757; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    
+    {% if user.is_authenticated %}
+        <i class="fa-solid fa-star star-btn-detail {% if is_starred %}starred{% endif %}" 
+           onclick="toggleStar(this, {{ idea.pk }})"></i>
+    {% endif %}
+    
+    <h2>{{ idea.title }}</h2>
+        <div class="meta-info">
+            <span>🛠️ 
+                <a href="{% url 'ideas:devtool_detail' idea.devtool.pk %}" class="devtool-link">
+                    {{ idea.devtool.name }}
+                </a>
+            </span>
+            
+            <span>📅 {{ idea.created_at|date:"Y.m.d" }}</span>
+        </div>
+
+    {% if idea.image %}
+        <a href="{{ idea.image.url }}" target="_blank" title="클릭해서 원본 보기">
+            <img src="{{ idea.image.url }}" class="detail-img" alt="{{ idea.title }}">
+        </a>
+    {% else %}
+        <div class="no-img-box">No Image</div>
+    {% endif %}
+
+    <div class="interest-area">
+        <span class="interest-label">관심도</span>
+        <button class="btn-interest" onclick="updateInterest({{ idea.pk }}, 'down')">－</button>
+        <span id="interest-{{ idea.pk }}" class="interest-score">{{ idea.interest }}</span>
+        <button class="btn-interest" onclick="updateInterest({{ idea.pk }}, 'up')">＋</button>
+    </div>
+
+    <div class="content-box">{{ idea.content }}</div>
+
+    <div class="btn-group">
+        <a href="{% url 'ideas:idea_list' %}" class="btn-action btn-list">목록</a>
+        <a href="{% url 'ideas:idea_update' idea.pk %}" class="btn-action btn-edit">수정</a>
+        
+        <form action="{% url 'ideas:idea_delete' idea.pk %}" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-action btn-delete" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateInterest(pk, action) {
+        const url = `/${pk}/interest/${action}/`;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.querySelector(`#interest-${pk}`).textContent = data.interest;
+        })
+        .catch(err => console.error(err));
+    }
+
+    function toggleStar(icon, pk) {
+        const url = `/${pk}/star/`;
+        fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrftoken},
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.is_starred) {
+                icon.classList.add('starred');
+            } else {
+                icon.classList.remove('starred');
+            }
+        })
+        .catch(err => console.error(err));
+    }
+</script>
+{% endblock %}

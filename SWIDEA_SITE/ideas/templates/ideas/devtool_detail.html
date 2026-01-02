@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ devtool.name }} - 상세정보</title>
+</head>
+<body>
+    <h1>🔎 {{ devtool.name }} 상세 정보</h1>
+    
+    <div>
+        <strong>종류:</strong> {{ devtool.kind }}
+    </div>
+    
+    <div>
+        <strong>설명:</strong>
+        <p>{{ devtool.content }}</p>
+    </div>
+    
+    <hr>
+    
+    <a href="{% url 'ideas:devtool_list' %}">목록으로</a>
+
+    <a href="{% url 'ideas:devtool_update' devtool.pk %}">
+        <button>수정</button>
+    </a>
+
+    <form action="{% url 'ideas:devtool_delete' devtool.pk %}" method="POST" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
+    </form>
+
+</body>
+</html>

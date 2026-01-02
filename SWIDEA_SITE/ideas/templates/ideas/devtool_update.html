@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>개발툴 수정</title>
+</head>
+<body>
+    <h1>🛠️ {{ devtool.name }} 수정하기</h1>
+    
+    <form action="" method="POST">
+        {% csrf_token %}
+        
+        <div>
+            <label for="name">이름:</label>
+            <input type="text" name="name" id="name" value="{{ devtool.name }}" required>
+        </div>
+        
+        <div>
+            <label for="kind">종류:</label>
+            <input type="text" name="kind" id="kind" value="{{ devtool.kind }}">
+        </div>
+        
+        <div>
+            <label for="content">설명:</label>
+            <textarea name="content" id="content" cols="30" rows="5">{{ devtool.content }}</textarea>
+        </div>
+        
+        <button type="submit">수정 완료</button>
+    </form>
+    
+    <a href="{% url 'ideas:devtool_detail' devtool.pk %}">취소하고 돌아가기</a>
+</body>
+</html>
