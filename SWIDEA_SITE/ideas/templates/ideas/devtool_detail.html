@@ -26,6 +26,16 @@
         color: #ddd; line-height: 1.6; margin-bottom: 30px; white-space: pre-wrap;
     }
 
+    /* [추가] 관련 아이디어 리스트 스타일 */
+    .related-ideas { margin-bottom: 30px; border-top: 1px solid #444; padding-top: 20px; }
+    .related-title { font-size: 1.1rem; color: #aaa; margin-bottom: 10px; }
+    .idea-link-item {
+        display: block; background-color: #444; padding: 10px 15px;
+        margin-bottom: 8px; border-radius: 8px; text-decoration: none;
+        color: white; font-weight: bold; transition: background 0.2s;
+    }
+    .idea-link-item:hover { background-color: #555; color: #A6E22E; }
+
     /* 버튼 그룹 */
     .btn-group { display: flex; gap: 10px; justify-content: center; }
     .btn-action {
@@ -51,6 +61,17 @@
 
     <div class="content-box">
         {{ devtool.content }}
+    </div>
+
+    <div class="related-ideas">
+        <div class="related-title">🔗 이 툴을 사용하는 아이디어</div>
+        {% for idea in related_ideas %}
+            <a href="{% url 'ideas:idea_detail' idea.pk %}?prev=devtool_detail&devtool_pk={{ devtool.pk }}" class="idea-link-item">
+                💡 {{ idea.title }}
+            </a>
+        {% empty %}
+            <p style="color: #666; font-size: 0.9rem;">아직 이 툴을 사용하는 아이디어가 없습니다.</p>
+        {% endfor %}
     </div>
     
     <div class="btn-group">

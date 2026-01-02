@@ -105,11 +105,16 @@
     {% endif %}
     
     <h2>{{ idea.title }}</h2>
-        <div class="meta-info">
+    <div class="meta-info">
             <span>🛠️ 
-                <a href="{% url 'ideas:devtool_detail' idea.devtool.pk %}?prev=idea_detail&idea_pk={{ idea.pk }}" class="devtool-link">
-                    {{ idea.devtool.name }}
-                </a>
+                {% for tool in idea.devtools.all %}
+                    <a href="{% url 'ideas:devtool_detail' tool.pk %}?prev=idea_detail&idea_pk={{ idea.pk }}" class="devtool-link">
+                        {{ tool.name }}
+                    </a>
+                    {% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    선택 안 함
+                {% endfor %}
             </span>
             
             <span>📅 {{ idea.created_at|date:"Y.m.d" }}</span>
@@ -133,7 +138,13 @@
     <div class="content-box">{{ idea.content }}</div>
 
     <div class="btn-group">
-        <a href="{% url 'ideas:idea_list' %}" class="btn-action btn-list">목록</a>
+        
+        {% if prev == 'devtool_detail' and devtool_pk %}
+            <a href="{% url 'ideas:devtool_detail' devtool_pk %}" class="btn-action btn-list">⬅️ 개발툴정보로</a>
+        {% else %}
+            <a href="{% url 'ideas:idea_list' %}" class="btn-action btn-list">목록</a>
+        {% endif %}
+
         <a href="{% url 'ideas:idea_update' idea.pk %}" class="btn-action btn-edit">수정</a>
         
         <form action="{% url 'ideas:idea_delete' idea.pk %}" method="POST" style="display:inline;">

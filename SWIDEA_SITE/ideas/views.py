@@ -37,15 +37,18 @@ def devtool_create(request):
 def devtool_detail(request, pk):
     devtool = get_object_or_404(DevTool, pk=pk)
     
-    # [추가] URL 꼬리표에서 '어디서 왔는지(prev)'와 '아이디어 번호(idea_pk)'를 꺼냅니다.
-    # 만약 그냥 들어왔으면 None이 됩니다.
+    # [기존 기능] 아이디어에서 넘어왔을 때 되돌아가기 위한 정보
     prev = request.GET.get('prev')
     idea_pk = request.GET.get('idea_pk')
-    
+
+    # "Idea 테이블 전체에서(Idea.objects), devtool이 지금 이 녀석(devtool)인 것만 필터링해라"
+    related_ideas = Idea.objects.filter(devtools=devtool)
+
     ctx = {
         'devtool': devtool,
-        'prev': prev,       # 템플릿으로 전달
-        'idea_pk': idea_pk, # 템플릿으로 전달
+        'prev': prev,
+        'idea_pk': idea_pk,
+        'related_ideas': related_ideas, # 템플릿으로 전달
     }
     return render(request, 'ideas/devtool_detail.html', ctx)
 
@@ -132,17 +135,27 @@ def idea_create(request):
         elif interest < 0:
             interest = 0
             
-        devtool_id = request.POST['devtool']
-        devtool = DevTool.objects.get(pk=devtool_id)
+# --------------------------------------------------------
+        # [수정 포인트 1] 여러 개의 ID를 리스트로 받아옵니다.
+        # HTML에서 <input name="devtools">로 보낼 것이므로 getlist 사용
+        devtool_ids = request.POST.getlist('devtools')
+        
         image = request.FILES.get('image')
 
-        Idea.objects.create(
+        # [수정 포인트 2] 아이디어 객체를 먼저 만듭니다.
+        # (ManyToManyField는 객체가 생성된 뒤에만 넣을 수 있습니다!)
+        # devtool=... 부분은 여기서 빠집니다.
+        idea = Idea.objects.create(
             title=title,
             content=content,
-            interest=interest, # 고정된 값 저장
-            devtool=devtool,
+            interest=interest,
             image=image
         )
+
+        # [수정 포인트 3] 만들어진 아이디어에 개발툴 리스트를 심어줍니다.
+        # 받아온 ID 리스트(devtool_ids)를 한방에 저장합니다.
+        idea.devtools.set(devtool_ids)
+        # --------------------------------------------------------
         return redirect('ideas:idea_list')
 
     # GET 요청: 등록 폼 보여주기
@@ -151,31 +164,38 @@ def idea_create(request):
     ctx = {'devtools': devtools}
     return render(request, 'ideas/idea_create.html', ctx)
 
-# ideas/views.py
-
 def idea_detail(request, pk):
     idea = get_object_or_404(Idea, pk=pk)
     
-    # [추가] 접속한 사람이 이 글을 찜했는지 확인 (True/False)
+    # 1. 찜하기 여부 확인
     is_starred = False
     if request.user.is_authenticated:
         is_starred = IdeaStar.objects.filter(user=request.user, idea=idea).exists()
 
+    # 2. [추가된 부분] "개발툴 리스트에서 왔니?" 확인하기
+    # URL 쿼리 파라미터(?prev=devtool_detail&devtool_pk=...) 읽기
+    prev = request.GET.get('prev')
+    devtool_pk = request.GET.get('devtool_pk')
+
     ctx = {
         'idea': idea,
-        'is_starred': is_starred # 템플릿으로 전달
+        'is_starred': is_starred,
+        'prev': prev,             # 템플릿으로 전달 (돌아가기 버튼용)
+        'devtool_pk': devtool_pk, # 템플릿으로 전달 (돌아가기 버튼용)
     }
+    
+    # 3. 최종 렌더링 (return은 함수 안에 딱 하나만 있어야 합니다!)
     return render(request, 'ideas/idea_detail.html', ctx)
 
-# 4. 아이디어 수정 (Update)
 def idea_update(request, pk):
     idea = get_object_or_404(Idea, pk=pk)
 
     if request.method == 'POST':
+        # 1. 기본 정보(제목, 내용, 이미지) 업데이트
         idea.title = request.POST['title']
         idea.content = request.POST['content']
         
-        # [수정] 여기도 똑같이 제한 로직 추가
+        # [기존 로직 유지] 관심도 범위 제한 (0~7)
         new_interest = int(request.POST['interest'])
         if new_interest > 7:
             new_interest = 7
@@ -183,16 +203,23 @@ def idea_update(request, pk):
             new_interest = 0
         idea.interest = new_interest
         
-        devtool_id = request.POST['devtool']
-        idea.devtool = DevTool.objects.get(pk=devtool_id)
-
+        # 이미지 변경 사항이 있으면 업데이트
         if request.FILES.get('image'):
             idea.image = request.FILES.get('image')
             
+        # 2. 아이디어 본체를 먼저 저장합니다. (중요!)
         idea.save()
+
+        # 3. [수정 포인트] 개발툴(Many-to-Many) 관계 업데이트
+        # 체크박스에서 넘어온 여러 개의 ID를 리스트로 받습니다. (name="devtools")
+        devtool_ids = request.POST.getlist('devtools')
+        
+        # 기존에 연결된 툴을 싹 정리하고, 새로 선택된 것들로 갈아끼웁니다.
+        idea.devtools.set(devtool_ids) 
+
         return redirect('ideas:idea_detail', pk=idea.pk)
 
-    # GET 요청: 수정 폼 보여주기 (기존 값 채워서)
+    # GET 요청: 수정 폼 보여주기
     devtools = DevTool.objects.all()
     ctx = {
         'idea': idea,

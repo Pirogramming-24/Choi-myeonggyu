@@ -19,7 +19,7 @@ class Idea(models.Model):
     content = models.TextField()
     interest = models.IntegerField(default=0)
     # ideas 앱의 DevTool과 연결
-    devtool = models.ForeignKey(DevTool, on_delete=models.CASCADE, related_name='ideas')
+    devtools = models.ManyToManyField(DevTool, blank=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -100,7 +100,13 @@
             <div class="card-body">
                 <div>
                     <a href="{% url 'ideas:idea_detail' idea.pk %}" class="card-title">{{ idea.title }}</a>
-                    <p class="card-info">🛠️ {{ idea.devtool.name }}</p>
+                    <p class="card-info">
+                        🛠️ 
+                        {% for tool in idea.devtools.all %}
+                            {{ tool.name }}{% if not forloop.last %}, {% endif %} {% empty %}
+                            미정
+                        {% endfor %}
+                    </p>
                 </div>
                 
                 <div class="interest-control">

@@ -80,16 +80,18 @@
             <label for="interest">관심도</label>
             <input type="number" name="interest" id="interest" value="{{ idea.interest }}" min="0" max="7">
         </div>
-
+        
         <div class="form-group">
-            <label for="devtool">예상 개발툴</label>
-            <select name="devtool" id="devtool">
+            <label>예상 개발툴 (여러 개 선택 가능)</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; background: #444; padding: 15px; border-radius: 8px;">
                 {% for tool in devtools %}
-                    <option value="{{ tool.pk }}" {% if tool.pk == idea.devtool.pk %}selected{% endif %}>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                        <input type="checkbox" name="devtools" value="{{ tool.pk }}"
+                               {% if tool in idea.devtools.all %}checked{% endif %}>
                         {{ tool.name }}
-                    </option>
+                    </label>
                 {% endfor %}
-            </select>
+            </div>
         </div>
 
         <div class="btn-group">
