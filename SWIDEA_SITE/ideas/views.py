@@ -34,11 +34,19 @@ def devtool_create(request):
     # 2. 사용자가 그냥 링크를 타고 들어왔을 때 (GET 방식) -> 빈 폼 보여주기
     return render(request, 'ideas/devtool_create.html')
 
-def devtool_detail(request, pk): # URL에서 넘겨준 숫자(pk)를 받음
-    # DB에서 pk(id)가 일치하는 DevTool 하나를 가져옴 (없으면 404 에러)
+def devtool_detail(request, pk):
     devtool = get_object_or_404(DevTool, pk=pk)
     
-    ctx = {'devtool': devtool}
+    # [추가] URL 꼬리표에서 '어디서 왔는지(prev)'와 '아이디어 번호(idea_pk)'를 꺼냅니다.
+    # 만약 그냥 들어왔으면 None이 됩니다.
+    prev = request.GET.get('prev')
+    idea_pk = request.GET.get('idea_pk')
+    
+    ctx = {
+        'devtool': devtool,
+        'prev': prev,       # 템플릿으로 전달
+        'idea_pk': idea_pk, # 템플릿으로 전달
+    }
     return render(request, 'ideas/devtool_detail.html', ctx)
 
 # 1. 삭제 기능

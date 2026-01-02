@@ -107,7 +107,7 @@
     <h2>{{ idea.title }}</h2>
         <div class="meta-info">
             <span>🛠️ 
-                <a href="{% url 'ideas:devtool_detail' idea.devtool.pk %}" class="devtool-link">
+                <a href="{% url 'ideas:devtool_detail' idea.devtool.pk %}?prev=idea_detail&idea_pk={{ idea.pk }}" class="devtool-link">
                     {{ idea.devtool.name }}
                 </a>
             </span>

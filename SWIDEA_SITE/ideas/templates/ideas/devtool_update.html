@@ -1,33 +1,116 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>개발툴 수정</title>
-</head>
-<body>
-    <h1>🛠️ {{ devtool.name }} 수정하기</h1>
+{% extends 'base.html' %}
+
+{% block title %}개발툴 수정{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 폼 전체 컨테이너 (다크 모드 카드) */
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #2D2D2D;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        color: white;
+    }
+
+    /* 제목 스타일 */
+    .form-title {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #A6E22E; /* 연두색 포인트 */
+        font-size: 2rem;
+    }
+
+    /* 입력 그룹 간격 */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    /* 라벨 스타일 */
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #ddd;
+    }
+
+    /* 입력창 공통 스타일 */
+    input[type="text"],
+    textarea {
+        width: 100%;
+        padding: 12px;
+        background-color: #444;
+        border: 1px solid #555;
+        border-radius: 8px;
+        color: white;
+        font-size: 1rem;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+    }
+
+    /* 입력창 포커스 효과 */
+    input:focus, textarea:focus {
+        border-color: #A6E22E;
+    }
+
+    /* 버튼 그룹 */
+    .btn-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    /* 버튼 스타일 */
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        text-align: center;
+        transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+
+    .btn-submit { background-color: #A6E22E; color: #121212; }
+    .btn-cancel { background-color: #555; color: white; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="form-title">🛠️ {{ devtool.name }} 수정하기</h1>
     
     <form action="" method="POST">
         {% csrf_token %}
         
-        <div>
-            <label for="name">이름:</label>
+        <div class="form-group">
+            <label for="name">이름</label>
             <input type="text" name="name" id="name" value="{{ devtool.name }}" required>
         </div>
         
-        <div>
-            <label for="kind">종류:</label>
-            <input type="text" name="kind" id="kind" value="{{ devtool.kind }}">
+        <div class="form-group">
+            <label for="kind">종류</label>
+            <input type="text" name="kind" id="kind" value="{{ devtool.kind }}" placeholder="예: 언어, 프레임워크">
         </div>
         
-        <div>
-            <label for="content">설명:</label>
+        <div class="form-group">
+            <label for="content">설명</label>
             <textarea name="content" id="content" cols="30" rows="5">{{ devtool.content }}</textarea>
         </div>
         
-        <button type="submit">수정 완료</button>
+        <div class="btn-group">
+            <a href="{% url 'ideas:devtool_detail' devtool.pk %}" class="btn btn-cancel">취소</a>
+            
+            <button type="submit" class="btn btn-submit">수정 완료</button>
+        </div>
     </form>
-    
-    <a href="{% url 'ideas:devtool_detail' devtool.pk %}">취소하고 돌아가기</a>
-</body>
-</html>
+</div>
+{% endblock %}
