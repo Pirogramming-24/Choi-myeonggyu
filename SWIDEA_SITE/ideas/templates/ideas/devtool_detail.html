@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ devtool.name }} - 상세정보{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 다크 테마 카드 스타일 (아이디어 디테일과 통일) */
+    .detail-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #2D2D2D;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        color: white;
+    }
+
+    h2 { text-align: center; color: #A6E22E; margin-bottom: 20px; font-size: 2rem; }
+    
+    .info-group { margin-bottom: 30px; border-bottom: 1px solid #444; padding-bottom: 20px; }
+    .label { color: #aaa; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+    .value { font-size: 1.2rem; font-weight: bold; }
+
+    .content-box { 
+        background-color: #333; padding: 20px; border-radius: 10px; 
+        color: #ddd; line-height: 1.6; margin-bottom: 30px; white-space: pre-wrap;
+    }
+
+    /* [추가] 관련 아이디어 리스트 스타일 */
+    .related-ideas { margin-bottom: 30px; border-top: 1px solid #444; padding-top: 20px; }
+    .related-title { font-size: 1.1rem; color: #aaa; margin-bottom: 10px; }
+    .idea-link-item {
+        display: block; background-color: #444; padding: 10px 15px;
+        margin-bottom: 8px; border-radius: 8px; text-decoration: none;
+        color: white; font-weight: bold; transition: background 0.2s;
+    }
+    .idea-link-item:hover { background-color: #555; color: #A6E22E; }
+
+    /* 버튼 그룹 */
+    .btn-group { display: flex; gap: 10px; justify-content: center; }
+    .btn-action {
+        padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold;
+        text-decoration: none; color: white; font-size: 1rem; transition: opacity 0.2s;
+    }
+    .btn-action:hover { opacity: 0.9; }
+    
+    .btn-list { background-color: #555; }
+    .btn-edit { background-color: #2196F3; }
+    .btn-delete { background-color: #ff4757; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <h2>{{ devtool.name }}</h2>
+    
+    <div class="info-group">
+        <span class="label">종류</span>
+        <span class="value">{{ devtool.kind }}</span>
+    </div>
+
+    <div class="content-box">
+        {{ devtool.content }}
+    </div>
+
+    <div class="related-ideas">
+        <div class="related-title">🔗 이 툴을 사용하는 아이디어</div>
+        {% for idea in related_ideas %}
+            <a href="{% url 'ideas:idea_detail' idea.pk %}?prev=devtool_detail&devtool_pk={{ devtool.pk }}" class="idea-link-item">
+                💡 {{ idea.title }}
+            </a>
+        {% empty %}
+            <p style="color: #666; font-size: 0.9rem;">아직 이 툴을 사용하는 아이디어가 없습니다.</p>
+        {% endfor %}
+    </div>
+    
+    <div class="btn-group">
+        {% if prev == 'idea_detail' and idea_pk %}
+            <a href="{% url 'ideas:idea_detail' idea_pk %}" class="btn-action btn-list">⬅️ 아이디어로</a>
+        {% else %}
+            <a href="{% url 'ideas:devtool_list' %}" class="btn-action btn-list">목록으로</a>
+        {% endif %}
+
+        <a href="{% url 'ideas:devtool_update' devtool.pk %}" class="btn-action btn-edit">수정</a>
+
+        <form action="{% url 'ideas:devtool_delete' devtool.pk %}" method="POST" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn-action btn-delete" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

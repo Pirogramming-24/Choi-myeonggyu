@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My SW Idea Manage{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 다크 테마 기본 스타일 */
+        body {
+            background-color: #121212; /* 아주 어두운 배경 */
+            color: #ffffff; /* 흰색 글씨 */
+            font-family: sans-serif;
+            margin: 0;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* 내비게이션 바 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background-color: #1E1E1E;
+            border-bottom: 1px solid #333;
+        }
+        .navbar .logo { font-size: 1.2rem; font-weight: bold; }
+        .navbar .menu a { margin-left: 20px; color: #aaa; font-size: 0.9rem; }
+        .navbar .menu a:hover { color: #fff; }
+
+        /* 메인 컨텐츠 영역 */
+        .content-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        /* 버튼 기본 스타일 */
+        button { cursor: pointer; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">My SW Idea Manage</div>
+        <div class="menu">
+            <a href="{% url 'ideas:idea_list' %}">아이디어 관리</a>
+            <a href="{% url 'ideas:idea_create' %}">아이디어 등록</a>
+            <a href="{% url 'ideas:devtool_list' %}">개발툴 관리</a>
+            <a href="{% url 'ideas:devtool_create' %}">개발툴 등록</a>
+        </div>
+    </nav>
+
+    <div class="content-container">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
