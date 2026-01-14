@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block head %}
+<title>post_create</title>
+<style>
+    main { height: 100vh; }
+    /* 분석 중일 때 입력창을 회색으로 바꿔주는 스타일 */
+    .loading {
+        background-color: #e9ecef;
+        color: #495057;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<form action="{% url 'posts:create' %}" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-success">등록하기</button>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.getElementById('id_nutrition_image');
+        
+        const fields = {
+            calories: document.getElementById('id_calories'),
+            carbs: document.getElementById('id_carbs'),
+            protein: document.getElementById('id_protein'),
+            fat: document.getElementById('id_fat')
+        };
+
+        if (imageInput) {
+            imageInput.addEventListener('change', async function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // 1. [UX 개선] type="number"는 문자를 못 받으므로 잠시 "text"로 변경
+                Object.values(fields).forEach(input => {
+                    if(input) {
+                        input.type = "text"; // 잠시 텍스트 모드로 변경
+                        input.value = "분석 중...";
+                        input.classList.add('loading');
+                        input.readOnly = true;
+                    }
+                });
+
+                const formData = new FormData();
+                formData.append('ocr_image', file);
+
+                try {
+                    const response = await fetch("{% url 'posts:nutrition_ocr_api' %}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    });
+
+                    if (!response.ok) throw new Error('Network response was not ok');
+
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        const data = result.data;
+                        
+                        // 2. 성공 시 데이터 채우기 (다시 number로 복구)
+                        updateField(fields.calories, data.calories);
+                        updateField(fields.carbs, data.carbs);
+                        updateField(fields.protein, data.protein);
+                        updateField(fields.fat, data.fat);
+                        
+                        alert('영양성분 분석이 완료되었습니다! 🍎');
+                    } else {
+                        alert('분석 실패: ' + result.message);
+                        resetFields();
+                    }
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('서버 통신 중 오류가 발생했습니다.');
+                    resetFields();
+                } finally {
+                    // 3. 로딩 스타일 제거
+                    Object.values(fields).forEach(input => {
+                        if(input) {
+                            input.classList.remove('loading');
+                            input.readOnly = false;
+                        }
+                    });
+                }
+            });
+        }
+
+        // 값을 넣을 때 type을 다시 number로 돌려주는 함수
+        function updateField(input, value) {
+            if(input) {
+                input.value = ""; // 기존 값 초기화
+                input.type = "number"; // 숫자 모드로 복귀
+                input.value = value;
+            }
+        }
+
+        // 실패 시 초기화 함수
+        function resetFields() {
+            Object.values(fields).forEach(input => {
+                if(input) {
+                    input.value = "";
+                    input.type = "number"; // 실패해도 다시 숫자 모드로 복귀
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
