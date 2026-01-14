@@ -10,4 +10,5 @@ urlpatterns = [
     path('update/<int:pk>', update, name='update'),
     path('delete/<int:pk>', delete, name='delete'),
     path('api/ocr/', nutrition_ocr_api, name='nutrition_ocr_api'),
+    path('api/tagging/', product_tagging_api, name='product_tagging_api'), # 추가
 ]

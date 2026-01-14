@@ -90,6 +90,59 @@
             });
         }
 
+        // ==========================================
+        // 2. [추가] YOLO 기능 (상품 해시태그 자동 생성)
+        // ==========================================
+        // 모델 필드명이 'image'라면 id는 'id_image'
+        // 모델 필드명이 'hashtags'라면 id는 'id_hashtags' 입니다.
+        const productInput = document.getElementById('id_image');
+        const hashtagInput = document.getElementById('id_hashtags');
+
+        if (productInput && hashtagInput) {
+            productInput.addEventListener('change', async function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // 로딩 표시
+                hashtagInput.value = "이미지 분석 중... 🤖";
+                hashtagInput.classList.add('loading');
+                hashtagInput.readOnly = true;
+
+                const formData = new FormData();
+                formData.append('product_image', file); // views.py와 이름 일치해야 함
+
+                try {
+                    // 3단계에서 만든 URL 이름 사용
+                    const response = await fetch("{% url 'posts:product_tagging_api' %}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    });
+
+                    if (!response.ok) throw new Error('Network response was not ok');
+
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        // 결과 값 채우기 (예: "keyboard, mouse")
+                        hashtagInput.value = result.tags;
+                        alert('자동 태깅 완료! ✨');
+                    } else {
+                        hashtagInput.value = "";
+                        alert('태깅 실패: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    hashtagInput.value = "";
+                    alert('서버 통신 중 오류가 발생했습니다.');
+                } finally {
+                    // 로딩 스타일 제거
+                    hashtagInput.classList.remove('loading');
+                    hashtagInput.readOnly = false;
+                }
+            });
+        }
+
         // 값을 넣을 때 type을 다시 number로 돌려주는 함수
         function updateField(input, value) {
             if(input) {

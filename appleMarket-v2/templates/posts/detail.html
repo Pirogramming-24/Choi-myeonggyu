@@ -33,6 +33,13 @@
 <p>수정일: {{post.updated_at}}</p>
 <p>이 작성자의 글</p>
 
+<p>
+    해시태그: 
+    {% for tag in post.hashtags.split|join:","|make_list %} 
+        <a href="{% url 'posts:list' %}?hashtag={{ post.hashtags }}">{{ post.hashtags }}</a>
+    {% endfor %}
+</p>
+
 
 <hr />
 <a href="{% url 'posts:update' post.pk %}" class="btn btn-primary">수정하기</a>

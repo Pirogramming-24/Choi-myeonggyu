@@ -14,6 +14,8 @@ class Post(models.Model):
     photo = models.ImageField('이미지', blank=True, upload_to='posts/%Y%m%d')
 
     photo = models.ImageField('이미지', blank=True, upload_to='posts/%Y%m%d')
+
+    hashtags = models.CharField("해시태그", max_length=200, blank=True)
     
     # 추가해야 할 필드 (OCR 분석용 이미지)
     nutrition_image = models.ImageField('영양성분 이미지', blank=True, upload_to='nutrition/%Y%m%d')
