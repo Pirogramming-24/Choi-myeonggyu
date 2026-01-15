@@ -66,7 +66,17 @@ def create(request):
 
 def detail(request, pk):
     target_post = Post.objects.get(id = pk)
-    context = { 'post': target_post }
+# [추가] 해시태그를 쉼표 기준으로 잘라서 리스트로 만들기
+    # 예: "과자, 젤리" -> ['과자', '젤리']
+    if target_post.hashtags:
+        hashtag_list = [tag.strip() for tag in target_post.hashtags.split(',')]
+    else:
+        hashtag_list = []
+
+    context = { 
+        'post': target_post,
+        'hashtag_list': hashtag_list,  # 리스트를 템플릿으로 전달
+    }
     return render(request, 'posts/detail.html', context=context)
 
 def update(request, pk):
@@ -134,6 +144,11 @@ def product_tagging_api(request):
                     destination.write(chunk)
             
             tags = get_image_tags(temp_path)
+            # [수정] set()을 사용하여 중복 제거! (핵심)
+            # 예: ['과자', '과자', '음료수'] -> {'과자', '음료수'} -> ['과자', '음료수']
+            tags = list(set(tags))
+            
+            # 해시태그 문자열로 변환
             tag_string = ", ".join(tags)
 
             if os.path.exists(temp_path):
