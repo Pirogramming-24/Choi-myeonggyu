@@ -3,8 +3,12 @@
 import os
 import sys
 
+# [시스템 설정] AI 라이브러리 간 OpenMP 중복 로드 에러(Error #15) 방지용 코드
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True' 
 
 def main():
+# [추가] OpenMP 중복 로드 허용 설정 (이 두 줄을 추가하세요!)
+
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     try:
