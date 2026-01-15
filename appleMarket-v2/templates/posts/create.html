@@ -1,23 +1,29 @@
 {% extends 'base.html' %}
 {% block head %}
-<title>post_create</title>
-<style>
-    main { height: 100vh; }
-    /* 분석 중일 때 입력창을 회색으로 바꿔주는 스타일 */
-    .loading {
-        background-color: #e9ecef;
-        color: #495057;
-        font-weight: bold;
-    }
-</style>
+<title>상품 등록 - 사과마켓</title>
 {% endblock %}
 
 {% block content %}
-<form action="{% url 'posts:create' %}" method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button class="btn btn-success">등록하기</button>
-</form>
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card custom-card p-4">
+            <h3 class="text-center fw-bold mb-4 text-success">✨ 내 물건 판매하기</h3>
+            
+            <form action="{% url 'posts:create' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    {{ form.as_p }}
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-success btn-lg fw-bold">상품 등록 완료</button>
+                    <a href="/" class="btn btn-light text-muted">취소</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -35,11 +41,10 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // 1. [UX 개선] type="number"는 문자를 못 받으므로 잠시 "text"로 변경
                 Object.values(fields).forEach(input => {
                     if(input) {
-                        input.type = "text"; // 잠시 텍스트 모드로 변경
-                        input.value = "분석 중...";
+                        input.type = "text"; 
+                        input.value = "분석 중... ⏳";
                         input.classList.add('loading');
                         input.readOnly = true;
                     }
@@ -56,30 +61,24 @@
                     });
 
                     if (!response.ok) throw new Error('Network response was not ok');
-
                     const result = await response.json();
 
                     if (result.status === 'success') {
                         const data = result.data;
-                        
-                        // 2. 성공 시 데이터 채우기 (다시 number로 복구)
                         updateField(fields.calories, data.calories);
                         updateField(fields.carbs, data.carbs);
                         updateField(fields.protein, data.protein);
                         updateField(fields.fat, data.fat);
-                        
-                        alert('영양성분 분석이 완료되었습니다! 🍎');
+                        alert('AI 영양성분 분석 완료! 🍎');
                     } else {
                         alert('분석 실패: ' + result.message);
                         resetFields();
                     }
-
                 } catch (error) {
                     console.error('Error:', error);
                     alert('서버 통신 중 오류가 발생했습니다.');
                     resetFields();
                 } finally {
-                    // 3. 로딩 스타일 제거
                     Object.values(fields).forEach(input => {
                         if(input) {
                             input.classList.remove('loading');
@@ -90,11 +89,6 @@
             });
         }
 
-        // ==========================================
-        // 2. [추가] YOLO 기능 (상품 해시태그 자동 생성)
-        // ==========================================
-        // 모델 필드명이 'image'라면 id는 'id_image'
-        // 모델 필드명이 'hashtags'라면 id는 'id_hashtags' 입니다.
         const productInput = document.getElementById('id_image');
         const hashtagInput = document.getElementById('id_hashtags');
 
@@ -103,16 +97,14 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // 로딩 표시
                 hashtagInput.value = "이미지 분석 중... 🤖";
                 hashtagInput.classList.add('loading');
                 hashtagInput.readOnly = true;
 
                 const formData = new FormData();
-                formData.append('product_image', file); // views.py와 이름 일치해야 함
+                formData.append('product_image', file); 
 
                 try {
-                    // 3단계에서 만든 URL 이름 사용
                     const response = await fetch("{% url 'posts:product_tagging_api' %}", {
                         method: 'POST',
                         body: formData,
@@ -120,13 +112,11 @@
                     });
 
                     if (!response.ok) throw new Error('Network response was not ok');
-
                     const result = await response.json();
 
                     if (result.status === 'success') {
-                        // 결과 값 채우기 (예: "keyboard, mouse")
                         hashtagInput.value = result.tags;
-                        alert('자동 태깅 완료! ✨');
+                        alert('AI 자동 태깅 완료! ✨');
                     } else {
                         hashtagInput.value = "";
                         alert('태깅 실패: ' + result.message);
@@ -136,28 +126,25 @@
                     hashtagInput.value = "";
                     alert('서버 통신 중 오류가 발생했습니다.');
                 } finally {
-                    // 로딩 스타일 제거
                     hashtagInput.classList.remove('loading');
                     hashtagInput.readOnly = false;
                 }
             });
         }
 
-        // 값을 넣을 때 type을 다시 number로 돌려주는 함수
         function updateField(input, value) {
             if(input) {
-                input.value = ""; // 기존 값 초기화
-                input.type = "number"; // 숫자 모드로 복귀
+                input.value = ""; 
+                input.type = "number"; 
                 input.value = value;
             }
         }
 
-        // 실패 시 초기화 함수
         function resetFields() {
             Object.values(fields).forEach(input => {
                 if(input) {
                     input.value = "";
-                    input.type = "number"; // 실패해도 다시 숫자 모드로 복귀
+                    input.type = "number"; 
                 }
             });
         }
