@@ -74,7 +74,15 @@
             <div class="review-card">
                 {% if review.is_tmdb %}<span class="badge-tmdb">TMDB</span>{% endif %}
                 <a href="{% url 'review_detail' review.pk %}">
-                    <img src="{% if review.is_tmdb %}{{ review.poster_path }}{% else %}{{ review.image.url }}{% endif %}" class="review-img">
+                    {% if review.is_tmdb and review.poster_path %}
+                        <img src="{{ review.poster_path }}" class="review-img">
+                    {% elif review.image %}
+                        <img src="{{ review.image.url }}" class="review-img">
+                    {% else %}
+                        <div style="height:300px; background:#eee; display:flex; align-items:center; justify-content:center; color:#ccc;">
+                            No Poster
+                        </div>
+                    {% endif %}
                 </a>
                 <div class="review-info">
                     <div style="font-weight:bold; margin-bottom:5px;">{{ review.title }}</div>

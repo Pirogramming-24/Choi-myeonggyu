@@ -127,3 +127,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# 로그인 성공 시 이동할 페이지 (URL 네임)
+LOGIN_REDIRECT_URL = 'review_list'
+
+# 로그아웃 시 이동할 페이지
+LOGOUT_REDIRECT_URL = 'main'

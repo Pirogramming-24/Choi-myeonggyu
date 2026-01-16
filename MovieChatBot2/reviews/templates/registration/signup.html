@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+    <h2 style="text-align: center; margin-bottom: 30px;">📝 회원가입</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn-common" style="width: 100%; margin-top: 20px; background-color: #28a745;">가입하기</button>
+    </form>
+    <div style="text-align: center; margin-top: 20px; font-size: 0.9em; color: #666;">
+        이미 계정이 있으신가요? <a href="{% url 'login' %}" style="color: #007bff;">로그인</a>
+    </div>
+</div>
+{% endblock %}

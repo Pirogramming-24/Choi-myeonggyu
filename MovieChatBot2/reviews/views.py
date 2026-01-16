@@ -10,10 +10,28 @@ from .forms import ReviewForm
 from .utils import fetch_tmdb_popular_movies
 from .ai_utils import get_ai_response  # AI 로직 연동
 from .utils import search_tmdb_movies, get_movie_details # utils.py에 정의한 함수들
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
+from .models import Review, Comment # Comment 모델 추가 확인
+
 
 # 1. 메인 페이지
 def main(request):
     return render(request, "main.html")
+
+# 회원가입 뷰
+def signup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user) # 가입 즉시 로그인
+            messages.success(request, f"{user.username}님, 환영합니다! 이제 영화 기록을 시작해보세요.")
+            return redirect('review_list')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
 
 # 2. 리뷰 리스트 (통계 대시보드 및 필터 포함)
 def review_list(request):
@@ -98,14 +116,20 @@ def get_tmdb_details_ajax(request, tmdb_id):
     return JsonResponse({'error': '데이터를 가져오지 못했습니다.'}, status=404)
 
 # [수정] 3. 리뷰 작성 뷰 (자동 완성 로직 포함)
+@login_required
 def review_create(request):
     initial_data = {}
     tmdb_id = request.GET.get('tmdb_id')
-    
+    poster_path = ""
+
+    # [중복 체크] 이미 DB에 해당 tmdb_id가 있는지 먼저 확인합니다.
+    if tmdb_id and Review.objects.filter(tmdb_id=tmdb_id).exists():
+        messages.error(request, "이미 등록된 영화입니다. 기존 리뷰를 확인하거나 다른 영화를 검색해주세요.")
+        return redirect('movie_search') # 검색 페이지로 돌려보냄
+
     if tmdb_id:
-        details = get_movie_details(tmdb_id) # utils.py의 상세 정보 호출
+        details = get_movie_details(tmdb_id)
         if details:
-            # 1. 기본 정보 설정
             initial_data = {
                 'title': details['title'],
                 'director': details['director'],
@@ -114,28 +138,35 @@ def review_create(request):
                 'runtime': details['runtime'],
                 'content': details['overview'],
             }
-            
-            # 2. 장르 다중 선택(M2M) 처리
-            genre_names = details.get('genre', '').split(', ')
-            genre_objects = []
-            for name in genre_names:
-                # DB에 장르가 있으면 가져오고, 없으면 새로 만듭니다
-                genre_obj, _ = Genre.objects.get_or_create(name=name.strip())
-                genre_objects.append(genre_obj)
-            
-            # [핵심] ManyToMany 필드의 초기값은 ID 리스트나 객체 리스트여야 합니다.
-            initial_data['genres'] = genre_objects
+            poster_path = details['poster_path']
 
     if request.method == "POST":
         form = ReviewForm(request.POST, request.FILES)
         if form.is_valid():
-            review = form.save()
+            # 저장 직전 한 번 더 체크 (동시성 문제 방지)
+            tmdb_id_post = request.POST.get('tmdb_id')
+            if tmdb_id_post and Review.objects.filter(tmdb_id=tmdb_id_post).exists():
+                messages.error(request, "이미 등록된 영화입니다.")
+                return redirect('movie_search')
+
+            review = form.save(commit=False)
+            review.author = request.user
+            
+            if tmdb_id_post:
+                review.tmdb_id = tmdb_id_post
+                review.is_tmdb = True
+                review.poster_path = request.POST.get('poster_path')
+            
+            review.save()
+            form.save_m2m()
+            messages.success(request, "리뷰가 등록되었습니다.")
             return redirect('review_list')
     else:
-        # initial 데이터를 가진 폼 생성 (여기서 장르가 체크됩니다!)
         form = ReviewForm(initial=initial_data)
-        
-    return render(request, 'review_form.html', {'form': form, 'action': '작성'})
+
+    return render(request, 'review_form.html', {
+        'form': form, 'action': '작성', 'tmdb_id': tmdb_id, 'poster_path': poster_path
+    })
 
 # 5. 리뷰 수정
 def review_update(request, pk):
@@ -227,3 +258,31 @@ def init_genres(request):
             
     messages.success(request, f"{count}개의 새로운 장르 카테고리가 추가되었습니다.")
     return redirect('review_list')
+
+@login_required
+def comment_create(request, pk):
+    review = get_object_or_404(Review, pk=pk)
+    if request.method == "POST":
+        content = request.POST.get('content')
+        if content:
+            Comment.objects.create(
+                review=review,
+                author=request.user,
+                content=content
+            )
+    return redirect('review_detail', pk=pk)
+
+# [추가] 댓글 작성 기능
+@login_required # 로그인 안 한 사용자는 로그인 페이지로 튕깁니다.
+def comment_create(request, pk):
+    review = get_object_or_404(Review, pk=pk)
+    if request.method == "POST":
+        content = request.POST.get('content')
+        if content:
+            Comment.objects.create(
+                review=review,
+                author=request.user, # 현재 로그인한 유저
+                content=content
+            )
+            messages.success(request, "댓글이 성공적으로 등록되었습니다.")
+    return redirect('review_detail', pk=pk)

@@ -41,10 +41,22 @@
 
     <div class="header">
         <h1><a href="{% url 'main' %}" style="text-decoration: none; color: inherit;">🎬 내 영화 기록장</a></h1>
-        <div style="display: flex; gap: 10px;">
-            <a href="{% url 'review_list' %}" class="btn-common">전체 목록</a>
-            <a href="{% url 'sync_tmdb' %}" class="btn-common" style="background-color: #28a745;">🔄 TMDB 불러오기</a>
-            <a href="{% url 'movie_search' %}" class="btn-common" style="background-color: #6f42c1;">📝 새 리뷰 작성</a>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {% if user.is_authenticated %}
+                <span style="font-size: 0.9em; margin-right: 10px;">👤 <strong>{{ user.username }}</strong>님</span>
+                <a href="{% url 'review_list' %}" class="btn-common">전체 목록</a>
+                <a href="{% url 'sync_tmdb' %}" class="btn-common" style="background-color: #28a745;">🔄 TMDB 불러오기</a>
+                <a href="{% url 'movie_search' %}" class="btn-common" style="background-color: #6f42c1;">📝 새 리뷰 작성</a>
+                
+                <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-common" style="background-color: #dc3545;">로그아웃</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn-common">로그인</a>
+                <a href="{% url 'signup' %}" class="btn-common" style="background-color: #28a745;">회원가입</a>
+            {% endif %}
         </div>
     </div>
 
