@@ -1,0 +1,14 @@
+# Web Framework
+Django>=6.0.1
+asgiref
+sqlparse
+
+# AI & Data
+openai
+mediapipe
+numpy
+pillow
+
+# Config & Utils
+python-dotenv
+requests
