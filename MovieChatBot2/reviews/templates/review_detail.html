@@ -52,7 +52,16 @@
                 <div class="info-label">📅 개봉</div> <div class="info-value">{{ review.release_year }}년</div>
                 <div class="info-label">🎬 감독</div> <div class="info-value">{{ review.director|default:"정보 없음" }}</div>
                 <div class="info-label">👥 출연</div> <div class="info-value">{{ review.cast|default:"정보 없음" }}</div>
-                <div class="info-label">📂 장르</div> <div class="info-value">{{ review.genre }}</div>
+                
+                <div class="info-label">📂 장르</div> 
+                <div class="info-value">
+                    {% for g in review.genres.all %}
+                        {{ g.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        장르 정보 없음
+                    {% endfor %}
+                </div>
+
                 <div class="info-label">⏱️ 러닝타임</div> <div class="info-value">{{ review.runtime_display }}</div>
             </div>
 

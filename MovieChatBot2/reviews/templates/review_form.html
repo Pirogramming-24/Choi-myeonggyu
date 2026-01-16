@@ -8,16 +8,37 @@
     
     .form-group { margin-bottom: 20px; }
     .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
-    .form-control { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1em; }
     
-    /* 2단 레이아웃 (영화 정보 / 나의 리뷰) */
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    /* 입력창 공통 스타일 */
+    input[type="text"], input[type="number"], textarea, select {
+        width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1em; box-sizing: border-box;
+    }
+
+    /* [신규] 장르 체크박스 리스트 스타일 */
+    .genre-checkbox-list {
+        display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; background: #f9f9f9; border-radius: 10px; border: 1px solid #eee;
+    }
+    .genre-item { cursor: pointer; }
+    .genre-item input[type="checkbox"] { display: none; } /* 실제 체크박스는 숨김 */
+    
+    .genre-tag {
+        display: inline-block; padding: 6px 15px; background: white; border: 1px solid #ddd;
+        border-radius: 20px; font-size: 0.85em; color: #666; transition: 0.2s;
+    }
+    
+    /* 체크되었을 때 스타일 */
+    .genre-item input[type="checkbox"]:checked + .genre-tag {
+        background: #007bff; color: white; border-color: #007bff; font-weight: bold;
+    }
+
+    /* 2단 레이아웃 */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
     
     .btn-save { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: 0.3s; }
     .btn-save:hover { background: #0056b3; }
 
-    /* 이미지 프리뷰 영역 */
-    .image-preview { width: 100%; height: 200px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #999; margin-top: 10px; overflow: hidden; }
+    /* 이미지 프리뷰 */
+    .image-preview { width: 100%; height: 220px; background: #f8f9fa; border: 2px dashed #ddd; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #999; margin-top: 10px; overflow: hidden; }
     .image-preview img { width: 100%; height: 100%; object-fit: cover; }
 </style>
 {% endblock %}
@@ -26,30 +47,48 @@
 <div class="form-container">
     <h2 style="text-align: center; margin-bottom: 40px;">🎬 {{ action }} 리뷰</h2>
     
-    <form method="POST" enctype="multipart/form-data"> {% csrf_token %}
+    <form method="POST" enctype="multipart/form-data"> 
+        {% csrf_token %}
         
         <div class="form-grid">
             <div class="form-section">
                 <div class="section-title">📌 영화 기본 정보</div>
+                
                 <div class="form-group">
                     <label>영화 제목</label>
                     {{ form.title }}
                 </div>
+
                 <div class="form-group">
-                    <label>감독 / 출연</label>
+                    <label>감독 / 출연진</label>
                     <div style="display: flex; gap: 10px;">
                         <div style="flex: 1;">{{ form.director }}</div>
                         <div style="flex: 2;">{{ form.cast }}</div>
                     </div>
                 </div>
+
                 <div class="form-group">
-                    <label>장르 / 개봉년도 / 러닝타임</label>
-                    <div style="display: flex; gap: 10px;">
-                        {{ form.genre }} {{ form.release_year }} {{ form.runtime }}
+                    <label>장르 선택 (복수 선택 가능)</label>
+                    <div class="genre-checkbox-list">
+                        {% for checkbox in form.genres %}
+                            <label class="genre-item">
+                                {{ checkbox.tag }}
+                                <span class="genre-tag">{{ checkbox.choice_label }}</span>
+                            </label>
+                        {% endfor %}
                     </div>
                 </div>
+
                 <div class="form-group">
-                    <label>메인 포스터</label>
+                    <label>개봉년도 / 러닝타임(분)</label>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">{{ form.release_year }}</div>
+                        <div style="flex: 1;">{{ form.runtime }}</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>메인 포스터 이미지</label>
                     {{ form.image }}
                 </div>
             </div>
@@ -69,15 +108,17 @@
 
                 <div class="form-group">
                     <div class="section-title">📸 인상 깊은 장면 (스크린샷)</div>
-                    <p style="font-size: 0.85em; color: #777;">가장 기억에 남는 장면을 직접 업로드해 주세요.</p>
+                    <p style="font-size: 0.85em; color: #777; margin-bottom: 10px;">가장 기억에 남는 장면을 직접 업로드해 주세요.</p>
                     {{ form.best_scene_image }}
                     <div class="image-preview" id="scene-preview">이미지 미리보기</div>
                 </div>
             </div>
         </div>
 
-        <div style="display: flex; gap: 15px; margin-top: 30px;">
-            <a href="{% url 'review_list' %}" class="btn-common" style="background: #6c757d; flex: 1; text-align: center;">취소</a>
+        <div style="display: flex; gap: 15px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 30px;">
+            <a href="javascript:void(0);" onclick="history.back();" class="btn-common" 
+            style="background: #6c757d; flex: 1; text-align: center; line-height: 45px;">취소</a>
+            
             <button type="submit" class="btn-save" style="flex: 2;">리뷰 저장하기</button>
         </div>
     </form>
@@ -86,14 +127,17 @@
 
 {% block extra_script %}
 <script>
-    // 이미지 선택 시 미리보기 기능
-    document.querySelector('input[name="best_scene_image"]').onchange = function(e) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.getElementById('scene-preview');
-            preview.innerHTML = `<img src="${e.target.result}">`;
-        }
-        reader.readAsDataURL(this.files[0]);
-    };
+    // 인상 깊은 장면 프리뷰 기능
+    const bestSceneInput = document.querySelector('input[name="best_scene_image"]');
+    if (bestSceneInput) {
+        bestSceneInput.onchange = function(e) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('scene-preview');
+                preview.innerHTML = `<img src="${e.target.result}">`;
+            }
+            reader.readAsDataURL(this.files[0]);
+        };
+    }
 </script>
 {% endblock %}

@@ -78,7 +78,14 @@
                 </a>
                 <div class="review-info">
                     <div style="font-weight:bold; margin-bottom:5px;">{{ review.title }}</div>
-                    <div style="font-size:0.85em; color:#888;">{{ review.release_year }}년 | {{ review.genre }}</div>
+                    <div style="font-size:0.85em; color:#888;">
+                        {{ review.release_year }}년 | 
+                        {% for g in review.genres.all %}
+                            {{ g.name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            장르 없음
+                        {% endfor %}
+                    </div>
                     <div style="color:#f39c12; font-weight:bold; margin-top:5px;">★ {{ review.rating }}</div>
                 </div>
             </div>

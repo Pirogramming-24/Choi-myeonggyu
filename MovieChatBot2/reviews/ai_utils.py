@@ -8,19 +8,21 @@ def get_ai_response(user_message):
         base_url="https://api.upstage.ai/v1/solar"
     )
 
-    # 1. 내 DB에서 수집한 영화의 모든 상세 정보를 텍스트로 변환
+    # 1. 내 DB 데이터 준비 (수정된 다중 장르 대응)
     all_movies = Review.objects.all()
-    context = "내 영화 데이터베이스 (이미 리뷰를 작성했거나 수집한 목록):\n"
+    context = "내 영화 데이터베이스:\n"
     
     for movie in all_movies:
-        # 감독, 출연진, 러닝타임 정보까지 포함하여 AI가 완벽하게 인지하도록 합니다.
+        # [수정된 부분] 여러 개의 장르 이름을 쉼표로 합칩니다.
+        genre_names = ", ".join([g.name for g in movie.genres.all()])
+        
         context += (
-            f"- 제목: {movie.title} | 장르: {movie.genre} | 감독: {movie.director} | "
-            f"배우: {movie.cast} | 개봉: {movie.release_year} | "
-            f"러닝타임: {movie.runtime_display} | 줄거리: {movie.content[:100]}...\n"
+            f"- 제목: {movie.title} | 장르: {genre_names} | "
+            f"감독: {movie.director} | 개봉: {movie.release_year} | "
+            f"줄거리: {movie.content[:60]}\n"
         )
 
-    # 2. 업스테이지 솔라 모델에게 역할과 지침 부여
+    # 2. AI에게 질문 던지기
     response = client.chat.completions.create(
         model="solar-1-mini-chat",
         messages=[

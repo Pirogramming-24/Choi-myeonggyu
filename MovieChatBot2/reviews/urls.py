@@ -12,4 +12,5 @@ urlpatterns = [
     path('search/', views.movie_search, name='movie_search'), # 영화 검색 페이지
     path('sync-details/<int:tmdb_id>/', views.get_tmdb_details_ajax, name='get_tmdb_details'), # 상세 정보 가져오기용
     path('delete-tmdb/', views.delete_all_tmdb, name='delete_tmdb'),
+    path('init-genres/', views.init_genres, name='init_genres'),
 ]
