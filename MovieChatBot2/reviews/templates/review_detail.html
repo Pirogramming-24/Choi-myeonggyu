@@ -1,148 +1,89 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ review.title }} - 상세 정보</title>
-    <style>
-        /* 전체 레이아웃 */
-        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+{% extends 'base.html' %}
 
-        /* [헤더] 기능 5: 클릭 시 리스트로 이동 */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 2px solid #eee;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #333; /* 검은색 */
-            text-decoration: none; /* 밑줄 제거 */
-        }
-        .logo span { color: #AB060F; } /* 포인트 컬러 */
+{% block title %}{{ review.title }} - 리뷰 상세 보기{% endblock %}
 
-        /* [상단 영역] 제목과 수정 버튼(파란 네모) */
-        .top-section {
-            display: flex;
-            justify-content: space-between; /* 양쪽 끝 정렬 */
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .movie-title { font-size: 2.5em; margin: 0; }
-        
-        /* 수정 버튼 스타일 */
-        .btn-edit {
-            text-decoration: none;
-            color: #007bff;
-            border: 1px solid #007bff;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        .btn-edit:hover { background-color: #f0f8ff; }
+{% block extra_style %}
+<style>
+    .detail-container { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    
+    /* 상단 영역: 포스터와 핵심 정보 */
+    .detail-header { display: flex; gap: 40px; margin-bottom: 40px; border-bottom: 1px solid #eee; padding-bottom: 30px; }
+    .detail-poster { width: 300px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); flex-shrink: 0; }
+    .detail-main-info { flex: 1; }
+    .movie-title { font-size: 2.5em; font-weight: bold; margin-bottom: 15px; color: #222; }
+    
+    .info-grid { display: grid; grid-template-columns: 100px 1fr; gap: 15px; margin-top: 20px; }
+    .info-label { color: #888; font-weight: 600; }
+    .info-value { color: #333; }
 
-        /* [정보 박스] */
-        .info-box {
-            background-color: #f8f9fa;
-            padding: 25px;
-            border-radius: 10px;
-            border: 1px solid #eee;
-            margin-bottom: 30px;
-        }
-        .info-box p { margin: 10px 0; font-size: 1.05em; }
+    /* 별점 스타일 */
+    .rating-display { font-size: 1.5em; color: #f39c12; margin-top: 15px; display: flex; align-items: center; gap: 10px; }
 
-        /* [본문 영역] */
-        .content-area {
-            font-size: 1.1em;
-            line-height: 1.8;
-            margin-bottom: 50px;
-            min-height: 100px;
-        }
+    /* [신규] 인상 깊은 장면 섹션 */
+    .best-scene-section { margin-top: 40px; padding: 30px; background: #f8f9fa; border-radius: 15px; }
+    .section-title { font-size: 1.3em; font-weight: bold; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .best-scene-img { width: 100%; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-top: 10px; }
 
-        /* [하단 버튼 영역] 목록(빨간 네모) vs 삭제(초록 네모) */
-        .bottom-actions {
-            display: flex;
-            justify-content: space-between; /* 양쪽 끝 배치를 위해 필수 */
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
+    /* 리뷰 본문 */
+    .review-content { line-height: 1.8; font-size: 1.1em; color: #444; margin-top: 30px; white-space: pre-wrap; }
 
-        .btn-list {
-            color: #666;
-            text-decoration: none;
-            font-size: 1em;
-            display: flex;
-            align-items: center;
-        }
-        
-        .btn-delete {
-            background: none;
-            border: none;
-            color: #dc3545; /* 빨간색 계열 */
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1em;
-            padding: 0;
-        }
-        .btn-delete:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
+    /* 하단 버튼 바 */
+    .action-bar { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; }
+</style>
+{% endblock %}
 
-    <div class="container">
-        <div class="header">
-            <a href="{% url 'review_list' %}" class="logo">
-                my <span>Movie</span> reviews
-            </a>
+{% block content %}
+<div class="detail-container">
+    <div class="detail-header">
+        <div class="detail-poster">
+            {% if review.is_tmdb and review.poster_path %}
+                <img src="{{ review.poster_path }}" style="width:100%; border-radius:12px;">
+            {% elif review.image %}
+                <img src="{{ review.image.url }}" style="width:100%; border-radius:12px;">
+            {% else %}
+                <div style="height:400px; background:#eee; display:flex; align-items:center; justify-content:center; color:#ccc; border-radius:12px;">No Image</div>
+            {% endif %}
+        </div>
+
+        <div class="detail-main-info">
+            <div class="movie-title">{{ review.title }}</div>
+            
+            <div class="info-grid">
+                <div class="info-label">📅 개봉</div> <div class="info-value">{{ review.release_year }}년</div>
+                <div class="info-label">🎬 감독</div> <div class="info-value">{{ review.director|default:"정보 없음" }}</div>
+                <div class="info-label">👥 출연</div> <div class="info-value">{{ review.cast|default:"정보 없음" }}</div>
+                <div class="info-label">📂 장르</div> <div class="info-value">{{ review.genre }}</div>
+                <div class="info-label">⏱️ 러닝타임</div> <div class="info-value">{{ review.runtime_display }}</div>
             </div>
 
-        <div class="top-section">
-            <h1 class="movie-title">{{ review.title }}</h1>
-            
-            <a href="{% url 'review_update' review.pk %}" class="btn-edit">
-                ✏️ 수정하기
-            </a>
-        </div>
-
-        {% if review.image %}
-            <div style="margin-bottom: 30px;">
-                <img src="{{ review.image.url }}" alt="포스터" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <div class="rating-display">
+                <span>내 평점:</span>
+                <span>★ {{ review.rating }} / 5</span>
             </div>
-        {% endif %}
-
-        <div class="info-box">
-            <h3 style="margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 10px;">📋 영화 정보</h3>
-            <p><strong>📅 개봉:</strong> {{ review.release_year }}년</p>
-            <p><strong>🎭 장르:</strong> {{ review.genre }}</p>
-            <p><strong>🎬 감독:</strong> {{ review.director }}</p>
-            <p><strong>👥 주연:</strong> {{ review.cast }}</p>
-            
-            <p><strong>⏱ 러닝타임:</strong> {{ review.runtime_display }}</p>
-            <p><strong>⭐ 내 별점:</strong> <span style="color: #f39c12;">★ {{ review.rating }}</span></p>
-        </div>
-
-        <h3>📝 리뷰 내용</h3>
-        <div class="content-area">
-            {{ review.content|linebreaks }}
-        </div>
-
-        <div class="bottom-actions">
-            <a href="{% url 'review_list' %}" class="btn-list">
-                ⬅️ 목록으로 돌아가기
-            </a>
-
-            <form action="{% url 'review_delete' review.pk %}" method="POST">
-                {% csrf_token %}
-                <button type="submit" class="btn-delete" onclick="return confirm('정말 이 리뷰를 삭제하시겠습니까?')">
-                    🗑️ 삭제하기
-                </button>
-            </form>
         </div>
     </div>
 
-</body>
-</html>
+    <div class="section-title">✍️ 나의 기록</div>
+    <div class="review-content">
+        {{ review.content }}
+    </div>
+
+    {% if review.best_scene_image %}
+    <div class="best-scene-section">
+        <div class="section-title">📸 내가 뽑은 인상 깊은 장면</div>
+        <img src="{{ review.best_scene_image.url }}" class="best-scene-img" alt="가장 인상 깊었던 장면 스크린샷">
+    </div>
+    {% endif %}
+
+    <div class="action-bar">
+        <a href="{% url 'review_list' %}" class="btn-common" style="background:#6c757d;">⬅ 목록으로</a>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'review_update' review.pk %}" class="btn-common">수정하기</a>
+            <form action="{% url 'review_delete' review.pk %}" method="POST" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                {% csrf_token %}
+                <button type="submit" class="btn-common" style="background:#dc3545;">삭제하기</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

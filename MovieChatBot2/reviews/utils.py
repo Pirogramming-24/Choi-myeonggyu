@@ -34,3 +34,37 @@ def fetch_tmdb_popular_movies():
             break
 
     return all_movies
+def search_tmdb_movies(query):
+    token = os.getenv('TMDB_ACCESS_TOKEN')
+    url = f"https://api.themoviedb.org/3/search/movie?query={query}&language=ko-KR&page=1"
+    headers = {"Authorization": f"Bearer {token}", "accept": "application/json"}
+    response = requests.get(url, headers=headers)
+    return response.json().get('results', []) if response.status_code == 200 else []
+
+def get_movie_details(movie_id):
+    token = os.getenv('TMDB_ACCESS_TOKEN')
+    # credits(배우/제작진) 정보를 포함해서 가져옵니다.
+    url = f"https://api.themoviedb.org/3/movie/{movie_id}?language=ko-KR&append_to_response=credits"
+    headers = {"Authorization": f"Bearer {token}", "accept": "application/json"}
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        # 감독 추출
+        director = next((m['name'] for m in data['credits']['crew'] if m['job'] == 'Director'), "알 수 없음")
+        # 주연 배우 3명 추출
+        cast = ", ".join([m['name'] for m in data['credits']['cast'][:3]])
+        # 장르 합치기
+        genres = ", ".join([g['name'] for g in data.get('genres', [])])
+        
+        return {
+            'title': data.get('title'),
+            'director': director,
+            'cast': cast,
+            'genre': genres,
+            'release_year': data.get('release_date', '')[:4],
+            'runtime': data.get('runtime'),
+            'poster_path': f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get('poster_path') else '',
+            'overview': data.get('overview'),
+        }
+    return None

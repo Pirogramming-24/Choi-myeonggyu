@@ -20,7 +20,7 @@ class ReviewForm(forms.ModelForm):
         model = Review
         fields = [
             'title', 'director', 'cast', 'genre', 
-            'release_year', 'rating', 'runtime', 'content', 'image'
+            'release_year', 'rating', 'runtime', 'content', 'image', 'best_scene_image'
         ]
         widgets = {
             'rating': forms.HiddenInput(), # 별점 숨김 (JS로 처리)

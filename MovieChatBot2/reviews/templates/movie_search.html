@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="text-align: center; margin-bottom: 40px;">
+    <h2>🎥 어떤 영화의 리뷰를 쓰실건가요?</h2>
+    <form method="GET">
+        <input type="text" name="q" value="{{ query|default:'' }}" placeholder="영화 제목을 입력하세요..." 
+               style="padding: 12px; width: 60%; border-radius: 25px; border: 1px solid #ddd; outline: none;">
+        <button type="submit" class="btn-common">검색</button>
+    </form>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;">
+    {% for m in movies %}
+    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+        <img src="https://image.tmdb.org/t/p/w200{{ m.poster_path }}" style="width: 100%; border-radius: 5px; margin-bottom: 10px;">
+        <h4 style="margin: 5px 0; font-size: 0.95em;">{{ m.title }}</h4>
+        <p style="font-size: 0.8em; color: #888;">{{ m.release_date|slice:":4" }}</p>
+        <a href="{% url 'review_create' %}?tmdb_id={{ m.id }}" class="btn-common" style="font-size: 0.8em; width: 80%; display: inline-block;">리뷰 쓰기</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
