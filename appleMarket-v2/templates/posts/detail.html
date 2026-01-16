@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %} {% block head %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous" />
+<style>
+    main {
+        padding: 40px;
+        height: 100%;
+    }
+
+    img {
+        margin: 20px 0;
+        max-width: 100%; /* 이미지가 화면 밖으로 나가는 것 방지 */
+        border-radius: 10px;
+    }
+    
+    .hashtag-badge {
+        text-decoration: none;
+        margin-right: 5px;
+        color: #198754;
+    }
+</style>
+{% endblock%}
+
+
+{% block content %}
+<h1 style="color: green; font-size: 40px; font-weight: bold;">{{post.title}}</h1>
+
+{% if post.photo %}
+    <img src="{{post.photo.url}}" alt="제품 이미지" />
+{% elif post.image %}
+    <img src="{{post.image.url}}" alt="제품 이미지" />
+{% else %}
+    <img src="{% static 'posts/image/no-image.jpg' %}" alt="이미지 없음" />
+{% endif %}
+
+<div class="mt-3">
+    <p><strong>작성자:</strong> {{post.user}}</p>
+    <p><strong>지역:</strong> {{post.region}}</p>
+    <p><strong>가격:</strong> {{post.price}}원</p>
+</div>
+
+<h2 class="my-4" style="font-size: 1.5rem;">{{post.content|linebreaks}}</h2>
+
+{% if post.calories > 0 %}
+<div class="card border-success mb-4" style="max-width: 25rem;">
+    <div class="card-header bg-transparent border-success fw-bold text-success">
+        🥗 AI 영양성분 분석 결과
+    </div>
+    <div class="card-body text-success">
+        <table class="table table-borderless table-sm mb-0">
+            <tbody>
+                <tr>
+                    <td>🔥 칼로리</td>
+                    <td class="fw-bold text-end">{{ post.calories }} kcal</td>
+                </tr>
+                <tr>
+                    <td>🍚 탄수화물</td>
+                    <td class="fw-bold text-end">{{ post.carbs }} g</td>
+                </tr>
+                <tr>
+                    <td>🥩 단백질</td>
+                    <td class="fw-bold text-end">{{ post.protein }} g</td>
+                </tr>
+                <tr>
+                    <td>🧈 지방</td>
+                    <td class="fw-bold text-end">{{ post.fat }} g</td>
+                </tr>
+            </tbody>
+        </table>
+    
+    </div>
+</div>
+{% endif %}
+<p class="text-muted small">작성일: {{post.created_at|date:"Y-m-d H:i"}}</p>
+<p class="text-muted small">수정일: {{post.updated_at|date:"Y-m-d H:i"}}</p>
+
+<p>
+    <strong>해시태그:</strong>
+    {% for tag in hashtag_list %}
+        <a href="{% url 'posts:list' %}?hashtag={{ tag }}" class="badge bg-success text-decoration-none">#{{ tag }}</a>
+    {% empty %}
+        <span class="text-muted">없음</span>
+    {% endfor %}
+</p>
+
+<hr />
+<div class="d-flex gap-2">
+    <a href="{% url 'posts:update' post.pk %}" class="btn btn-primary">수정하기</a>
+    <a href="{% url 'posts:delete' post.pk %}" class="btn btn-danger" onclick="return confirm('정말 삭제하시겠습니까?');">삭제하기</a>
+    <a href="/" class="btn btn-outline-secondary">목록으로</a>
+</div>
+
+{% endblock content %}

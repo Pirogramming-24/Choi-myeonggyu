@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block head %}
+<title>상품 등록 - 사과마켓</title>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card custom-card p-4">
+            <h3 class="text-center fw-bold mb-4 text-success">✨ 내 물건 판매하기</h3>
+            
+            <form action="{% url 'posts:create' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    {{ form.as_p }}
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-success btn-lg fw-bold">상품 등록 완료</button>
+                    <a href="/" class="btn btn-light text-muted">취소</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageInput = document.getElementById('id_nutrition_image');
+        
+        const fields = {
+            calories: document.getElementById('id_calories'),
+            carbs: document.getElementById('id_carbs'),
+            protein: document.getElementById('id_protein'),
+            fat: document.getElementById('id_fat')
+        };
+
+        if (imageInput) {
+            imageInput.addEventListener('change', async function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                Object.values(fields).forEach(input => {
+                    if(input) {
+                        input.type = "text"; 
+                        input.value = "분석 중... ⏳";
+                        input.classList.add('loading');
+                        input.readOnly = true;
+                    }
+                });
+
+                const formData = new FormData();
+                formData.append('ocr_image', file);
+
+                try {
+                    const response = await fetch("{% url 'posts:nutrition_ocr_api' %}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    });
+
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        const data = result.data;
+                        updateField(fields.calories, data.calories);
+                        updateField(fields.carbs, data.carbs);
+                        updateField(fields.protein, data.protein);
+                        updateField(fields.fat, data.fat);
+                        alert('AI 영양성분 분석 완료! 🍎');
+                    } else {
+                        alert('분석 실패: ' + result.message);
+                        resetFields();
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('서버 통신 중 오류가 발생했습니다.');
+                    resetFields();
+                } finally {
+                    Object.values(fields).forEach(input => {
+                        if(input) {
+                            input.classList.remove('loading');
+                            input.readOnly = false;
+                        }
+                    });
+                }
+            });
+        }
+
+        const productInput = document.getElementById('id_image');
+        const hashtagInput = document.getElementById('id_hashtags');
+
+        if (productInput && hashtagInput) {
+            productInput.addEventListener('change', async function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                hashtagInput.value = "이미지 분석 중... 🤖";
+                hashtagInput.classList.add('loading');
+                hashtagInput.readOnly = true;
+
+                const formData = new FormData();
+                formData.append('product_image', file); 
+
+                try {
+                    const response = await fetch("{% url 'posts:product_tagging_api' %}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                    });
+
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        hashtagInput.value = result.tags;
+                        alert('AI 자동 태깅 완료! ✨');
+                    } else {
+                        hashtagInput.value = "";
+                        alert('태깅 실패: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    hashtagInput.value = "";
+                    alert('서버 통신 중 오류가 발생했습니다.');
+                } finally {
+                    hashtagInput.classList.remove('loading');
+                    hashtagInput.readOnly = false;
+                }
+            });
+        }
+
+        function updateField(input, value) {
+            if(input) {
+                input.value = ""; 
+                input.type = "number"; 
+                input.value = value;
+            }
+        }
+
+        function resetFields() {
+            Object.values(fields).forEach(input => {
+                if(input) {
+                    input.value = "";
+                    input.type = "number"; 
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
