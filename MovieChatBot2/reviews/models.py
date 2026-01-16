@@ -10,6 +10,9 @@ class Genre(models.Model):
 class Review(models.Model):
     # [추가] 작성자 필드: 유저가 삭제되면 해당 유저의 리뷰도 삭제되도록 설정(CASCADE)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    # [추가] 좋아요 필드: 한 명의 유저는 여러 영화에 좋아요를 누를 수 있고, 
+    # 한 영화는 여러 유저로부터 좋아요를 받을 수 있습니다.
+    likes = models.ManyToManyField(User, related_name='liked_reviews', blank=True)
     title = models.CharField(max_length=100)
     director = models.CharField(max_length=100, blank=True)
     cast = models.CharField(max_length=255, blank=True)

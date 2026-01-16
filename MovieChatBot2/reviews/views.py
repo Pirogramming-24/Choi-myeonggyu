@@ -138,6 +138,17 @@ def review_create(request):
                 'runtime': details['runtime'],
                 'content': details['overview'],
             }
+
+            # [핵심] TMDB에서 가져온 장르 문자열을 실제 Genre 객체 리스트로 변환
+            genre_names = details.get('genre', '').split(', ')
+            genre_objects = []
+            for name in genre_names:
+                genre_obj, _ = Genre.objects.get_or_create(name=name.strip())
+                genre_objects.append(genre_obj)
+            
+            # 폼에 장르 데이터를 미리 체크된 상태로 넘겨줌
+            initial_data['genres'] = genre_objects
+
             poster_path = details['poster_path']
 
     if request.method == "POST":
@@ -186,6 +197,18 @@ def review_delete(request, pk):
     if request.method == "POST":
         review.delete()
         return redirect('review_list')
+    return redirect('review_detail', pk=pk)
+
+@login_required
+def like_review(request, pk):
+    review = get_object_or_404(Review, pk=pk)
+    
+    # 현재 로그인한 유저가 이미 좋아요를 눌렀는지 확인
+    if review.likes.filter(id=request.user.id).exists():
+        review.likes.remove(request.user) # 좋아요 취소
+    else:
+        review.likes.add(request.user)    # 좋아요 추가
+        
     return redirect('review_detail', pk=pk)
 
 # 7. TMDB 데이터 동기화
