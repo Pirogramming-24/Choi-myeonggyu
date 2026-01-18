@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 영화 추천 챗봇</title>
+    <style>
+        /* 1. body의 기본 마진을 없애고 높이를 꽉 채웁니다 */
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 2. 컨테이너가 화면에 꽉 차도록 수정합니다 */
+        .chat-container { 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; /* 부모(iframe) 높이에 100% 맞춤 */
+            width: 100%;
+            margin: 0; 
+            border-radius: 0; /* 테두리 둥글기는 부모 div에서 처리하므로 여기선 0 */
+            box-shadow: none; 
+        }
+
+        .chat-header { 
+            background: #5A82F6; /* 이미지와 비슷한 블루 톤 */
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            font-weight: bold; 
+            font-size: 1.1em; 
+        }
+
+        .chat-messages { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px;
+            background-color: #f4f4f4; /* 배경색 살짝 추가 */
+        }
+
+        .message { 
+            max-width: 85%; 
+            padding: 10px 14px; 
+            border-radius: 15px; 
+            line-height: 1.5; 
+            font-size: 0.9em; 
+            word-break: break-all;
+        }
+
+        .bot { 
+            background: white; 
+            align-self: flex-start; 
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .user { 
+            background: #5A82F6; 
+            color: white; 
+            align-self: flex-end; 
+            border-bottom-right-radius: 2px; 
+        }
+
+        .chat-input-area { 
+            padding: 15px; 
+            border-top: 1px solid #eee; 
+            display: flex; 
+            gap: 8px; 
+            background: white;
+        }
+
+        input { 
+            flex: 1; 
+            border: 1px solid #ddd; 
+            padding: 10px 15px; 
+            border-radius: 20px; 
+            outline: none; 
+            font-size: 0.9em;
+        }
+
+        button { 
+            background: #5A82F6; 
+            color: white; 
+            border: none; 
+            padding: 0 18px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">🤖 AI 영화 추천 챗봇</div>
+        <div class="chat-messages" id="chat-box">
+            <div class="message bot">안녕하세요! 당신의 영화 컬렉션을 바탕으로 영화를 추천해드리는 AI입니다. 어떤 영화를 찾고 계신가요?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="영화에 대해 무엇이든 물어보세요..." onkeypress="if(event.keyCode==13) sendMessage()">
+            <button onclick="sendMessage()">전송</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            if (!input.value.trim()) return;
+
+            chatBox.innerHTML += `<div class="message user">${input.value}</div>`;
+            const message = input.value;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch('{% url "chatbot_api" %}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ message: message })
+                });
+                const data = await response.json();
+                chatBox.innerHTML += `<div class="message bot">${data.answer}</div>`;
+            } catch (e) {
+                chatBox.innerHTML += `<div class="message bot">오류가 발생했습니다. 다시 시도해주세요.</div>`;
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>

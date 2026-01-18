@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}My Movie Reviews{% endblock %}</title>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; max-width: 1100px; margin: 0 auto; padding: 20px; background-color: #f8f9fa; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .btn-common { padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; color: white; background-color: #007bff; transition: 0.2s; border: none; cursor: pointer; display: inline-block; }
+        .btn-common:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        
+        /* 플로팅 챗봇 스타일 유지 */
+        #floating-chatbot { position: fixed; bottom: 30px; right: 30px; z-index: 1000; display: flex; flex-direction: column; align-items: flex-end; }
+        .chat-window { width: 350px; height: 500px; background: white; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); display: none; overflow: hidden; margin-bottom: 20px; border: 1px solid #ddd; }
+        .chat-toggle-btn { width: 60px; height: 60px; border-radius: 50%; background: #007bff; color: white; border: none; font-size: 24px; cursor: pointer; }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body>
+
+    <body>
+    {% if messages %}
+    <div id="message-container" style="max-width: 1100px; margin: 10px auto;">
+        {% for message in messages %}
+            <div class="alert {{ message.tags }}" style="padding: 15px; margin-bottom: 20px; border-radius: 8px; 
+                {% if message.tags == 'success' %} background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                {% elif message.tags == 'error' %} background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                {% else %} background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; {% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    <script>
+        // 3초 뒤에 메시지가 자동으로 사라지게 하는 효과 (선택사항)
+        setTimeout(function() {
+            const container = document.getElementById('message-container');
+            if (container) container.style.display = 'none';
+        }, 3000);
+    </script>
+    {% endif %}
+
+    <div class="header">
+        <h1><a href="{% url 'main' %}" style="text-decoration: none; color: inherit;">🎬 내 영화 기록장</a></h1>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+            {% if user.is_authenticated %}
+                <span style="font-size: 0.9em; margin-right: 10px;">👤 <strong>{{ user.username }}</strong>님</span>
+                <a href="{% url 'review_list' %}" class="btn-common">전체 목록</a>
+                <a href="{% url 'sync_tmdb' %}" class="btn-common" style="background-color: #28a745;">🔄 TMDB 불러오기</a>
+                <a href="{% url 'movie_search' %}" class="btn-common" style="background-color: #6f42c1;">📝 새 리뷰 작성</a>
+                
+                <form action="{% url 'logout' %}" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-common" style="background-color: #dc3545;">로그아웃</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn-common">로그인</a>
+                <a href="{% url 'signup' %}" class="btn-common" style="background-color: #28a745;">회원가입</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <div id="floating-chatbot">
+        <div class="chat-window" id="chat-window"><iframe src="{% url 'chatbot' %}" style="width:100%; height:100%; border:none;"></iframe></div>
+        <button class="chat-toggle-btn" onclick="toggleChat()">🤖</button>
+    </div>
+
+    <script>
+        function toggleChat() {
+            const win = document.getElementById('chat-window');
+            win.style.display = (win.style.display === 'none' || win.style.display === '') ? 'flex' : 'none';
+        }
+    </script>
+    {% block extra_script %}{% endblock %}
+</body>
+</html>
