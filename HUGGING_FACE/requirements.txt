@@ -1,0 +1,8 @@
+Django
+transformers
+torch
+sentencepiece
+python-dotenv
+requests
+protobuf
+pillow
