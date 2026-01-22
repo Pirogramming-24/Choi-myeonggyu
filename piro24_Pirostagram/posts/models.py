@@ -78,3 +78,21 @@ class Story(models.Model):
 class StoryImage(models.Model):
     story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='stories/') 
+
+class Notification(models.Model):
+    TYPE_CHOICES = (
+        ('post', '새 게시글'),
+        ('follow', '팔로우'),
+        ('like', '좋아요'), # (선택사항)
+    )
+    
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_notifications')
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    message = models.CharField(max_length=255)
+    url = models.CharField(max_length=255, blank=True, null=True)
+    is_read = models.BooleanField(default=False) # 읽음 여부
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender} -> {self.receiver} : {self.message}"

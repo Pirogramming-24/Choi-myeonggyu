@@ -16,4 +16,5 @@ urlpatterns = [
     # ✅ 프로필 모달용 데이터 요청 API
     path('detail/<int:pk>/', post_detail_ajax, name='post_detail_ajax'),
     path('notification/', notification_ajax, name='notification_ajax'), 
+    path('notification/read/', notification_read_ajax, name='notification_read_ajax'),
 ]

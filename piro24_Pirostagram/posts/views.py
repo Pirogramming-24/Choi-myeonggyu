@@ -6,7 +6,7 @@ from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
 from django.core.serializers.json import DjangoJSONEncoder
-from .models import Post, Comment, Story, PostImage
+from .models import Post, Comment, Story, PostImage, Notification
 from .forms import PostForm, StoryForm
 from django.db.models import Count
 from django.db.models import Q
@@ -88,26 +88,35 @@ def post_list(request):
 # 2. [NEW] 알림 데이터 반환 (Ajax)
 @login_required
 def notification_ajax(request):
-    # 1. 내가 팔로우한 사람들의 최근 24시간 내 게시글
-    one_day_ago = timezone.now() - timedelta(hours=24)
-    followings = request.user.followings.all() # 팔로잉 목록
+    # 나에게 온 알림 중 최신순 10개
+    notis = Notification.objects.filter(receiver=request.user).order_by('-created_at')[:10]
     
-    recent_posts = Post.objects.filter(author__in=followings, created_at__gte=one_day_ago).order_by('-created_at')[:5]
+    # 안 읽은 알림 개수
+    unread_count = Notification.objects.filter(receiver=request.user, is_read=False).count()
     
-    notifications = []
-    
-    # 게시글 알림 만들기
-    for post in recent_posts:
-        notifications.append({
-            'type': 'post',
-            'message': f"{post.author.username}님이 새 게시글을 올렸습니다.",
-            'url': f"/users/profile/{post.author.username}/", # 프로필로 이동
-            'img': post.author.profile_photo.url if post.author.profile_photo else None
+    notifications_data = []
+    for noti in notis:
+        notifications_data.append({
+            'message': noti.message,
+            'url': noti.url,
+            'img': noti.sender.profile_photo.url if noti.sender.profile_photo else None,
+            'is_read': noti.is_read
         })
+        
+    return JsonResponse({
+        'notifications': notifications_data,
+        'unread_count': unread_count
+    })
 
-    # (스토리 알림도 원하면 추가 가능하지만, 상단바에 있으므로 생략하거나 동일하게 로직 추가)
-    
-    return JsonResponse({'notifications': notifications})
+# ==========================================
+# 2. 알림 읽음 처리 Ajax (신규 추가)
+# ==========================================
+@login_required
+@require_POST
+def notification_read_ajax(request):
+    # 나에게 온 모든 알림을 읽음 처리
+    Notification.objects.filter(receiver=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({'success': True})
 
 # 2. 게시글 수정 (New)
 @login_required
@@ -270,9 +279,23 @@ def post_create(request):
             post = form.save(commit=False)
             post.author = request.user
             post.save()
+            
+            # ... (이미지 저장 로직 유지) ...
             images = request.FILES.getlist('photos')
             for image in images:
                 PostImage.objects.create(post=post, photo=image)
+            
+            # ✅ [추가] 나를 팔로우하는 사람들에게 알림 생성
+            followers = request.user.followers.all() # related_name 확인 필요 (보통 followers)
+            for follower in followers:
+                Notification.objects.create(
+                    receiver=follower,
+                    sender=request.user,
+                    type='post',
+                    message=f"{request.user.username}님이 새 게시글을 올렸습니다.",
+                    url=f"/#post-{post.pk}" # 해당 게시글 위치로 이동 (앵커 태그 활용)
+                )
+                
             return redirect('posts:post_list')
     else:
         form = PostForm()
