@@ -83,6 +83,8 @@
                     {% else %}
                         <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
                     {% endif %}
+                    
+                    <a href="{% url 'posts:story_create' %}" class="add-story-btn" onclick="event.stopPropagation();" style="text-decoration: none;">+</a>
                 </div>
                 <span class="story-username">내 스토리</span>
             </div>
