@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 20px auto; background: white; border: 1px solid #dbdbdb; border-radius: 3px;">
+    <div style="padding: 10px; border-bottom: 1px solid #dbdbdb; text-align: center; font-weight: bold;">
+        게시글 수정
+    </div>
+
+    <form method="POST" action="" enctype="multipart/form-data" style="padding: 20px;">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">내용 수정</label>
+            {{ form.content }}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">기존 사진 관리 (체크 시 삭제)</label>
+            <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+                {% for image in post.images.all %}
+                    <div style="position: relative; flex-shrink: 0;">
+                        <img src="{{ image.photo.url }}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">
+                        <div style="position: absolute; top: 5px; right: 5px;">
+                            <input type="checkbox" name="delete_images" value="{{ image.pk }}" style="transform: scale(1.5); cursor: pointer;">
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px; border-top: 1px solid #efefef; padding-top: 15px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">새 사진 추가</label>
+            <input type="file" name="photos" multiple accept="image/*">
+        </div>
+
+        <button type="submit" style="width: 100%; margin-top: 10px; background-color: #0095f6; color: white; border: none; padding: 10px; font-weight: bold; border-radius: 4px; cursor: pointer;">
+            수정 완료
+        </button>
+        
+        <a href="{% url 'posts:post_list' %}" style="display: block; text-align: center; margin-top: 10px; text-decoration: none; color: #262626; font-size: 12px;">취소</a>
+    </form>
+</div>
+{% endblock %}

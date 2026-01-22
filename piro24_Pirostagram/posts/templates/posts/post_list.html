@@ -6,6 +6,10 @@
     body { background-color: #fafafa; }
     .feed-container { max-width: 470px; margin: 0 auto; padding-top: 30px; }
     
+    /* 검색창 스타일 */
+    .search-bar-container { max-width: 470px; margin: 0 auto 20px auto; display: flex; gap: 10px; }
+    .search-input { flex: 1; padding: 8px; border: 1px solid #dbdbdb; border-radius: 3px; background: #fafafa; outline: none; }
+
     /* 스토리 UI */
     .story-section { background: white; border: 1px solid #dbdbdb; border-radius: 8px; padding: 16px 0; margin-bottom: 24px; display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; min-height: 85px; align-items: center; padding-left: 15px; }
     .story-section::-webkit-scrollbar { display: none; }
@@ -20,7 +24,8 @@
     /* 게시글 카드 */
     .post-card { background: white; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 20px; }
     .post-header { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; }
-    
+    .post-header-user { display: flex; align-items: center; text-decoration: none; color: black; font-weight: 600; }
+
     /* 이미지 캐러셀 */
     .carousel-wrapper { position: relative; width: 100%; background: black; }
     .post-image-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth; }
@@ -42,6 +47,11 @@
     .comment-list { padding: 0 16px; font-size: 14px; margin-bottom: 10px; }
     .reply-item { margin-left: 20px; color: #666; font-size: 13px; margin-top: 3px; border-left: 2px solid #eee; padding-left: 5px; }
     .reply-btn { border: none; background: none; color: #8e8e8e; font-size: 11px; cursor: pointer; margin-left: 5px; }
+    
+    /* 댓글 액션 버튼 (수정/삭제) */
+    .comment-actions { font-size: 10px; color: #999; margin-left: 10px; cursor: pointer; }
+    .comment-actions:hover { text-decoration: underline; color: #0095f6; }
+
     .comment-input-area { border-top: 1px solid #efefef; padding: 10px; display: flex; align-items: center; }
     .comment-input { border: none; flex: 1; outline: none; height: 18px; font-size: 14px; }
     .comment-btn { border: none; background: none; color: #0095f6; font-weight: 600; cursor: pointer; }
@@ -66,9 +76,43 @@
         .story-prev { left: 10px; background: rgba(0,0,0,0.3); }
         .story-next { right: 10px; background: rgba(0,0,0,0.3); }
     }
+    .story-progress-container {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        z-index: 10002;
+        overflow: hidden;
+    }
+    
+    .story-progress-bar {
+        height: 100%;
+        background: white;
+        width: 0%;
+        /* JS로 클래스 toggle 시 애니메이션 실행 */
+    }
+
+    /* 애니메이션 정의: 3초 동안 0% -> 100% */
+    @keyframes storyProgress {
+        from { width: 0%; }
+        to { width: 100%; }
+    }
+    
+    .animating {
+        animation: storyProgress 3000ms linear forwards;
+    }
 </style>
 
 <div class="feed-container">
+
+    <form action="" method="GET" class="search-bar-container">
+        <input type="text" name="q" class="search-input" placeholder="게시글 내용 검색..." value="{{ q|default:'' }}">
+        <button type="submit" style="border: 1px solid #dbdbdb; background: white; border-radius: 3px; cursor: pointer;">🔍</button>
+    </form>
+
     <div class="story-section">
         {% if user_has_story %}
             <div class="story-item" onclick="openStoryModal('{{ user.username }}')">
@@ -129,7 +173,7 @@
     {% for post in posts %}
         <div class="post-card">
             <div class="post-header">
-                <a href="{% url 'users:profile' post.author.username %}" style="display:flex; align-items:center; text-decoration:none; color:black; font-weight:600;">
+                <a href="{% url 'users:profile' post.author.username %}" class="post-header-user">
                     {% if post.author.profile_photo %}
                         <img src="{{ post.author.profile_photo.url }}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; border: 1px solid #dbdbdb;">
                     {% else %}
@@ -137,11 +181,16 @@
                     {% endif %}
                     {{ post.author.username }}
                 </a>
+                
                 {% if post.author == user %}
-                    <form action="{% url 'posts:post_delete' post.pk %}" method="POST" onsubmit="return confirm('삭제하시겠습니까?');">
-                        {% csrf_token %}
-                        <button style="border:none; background:none; cursor:pointer;">🗑️</button>
-                    </form>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="location.href='{% url 'posts:post_update' post.pk %}'" style="border:none; background:none; cursor:pointer; font-size: 12px; color: #0095f6; font-weight: bold;">수정</button>
+                        
+                        <form action="{% url 'posts:post_delete' post.pk %}" method="POST" onsubmit="return confirm('삭제하시겠습니까?');">
+                            {% csrf_token %}
+                            <button style="border:none; background:none; cursor:pointer; font-size: 12px; color: #ed4956; font-weight: bold;">삭제</button>
+                        </form>
+                    </div>
                 {% endif %}
             </div>
 
@@ -168,10 +217,7 @@
                         document.addEventListener("DOMContentLoaded", function() {
                             const prevBtn = document.getElementById('prev-btn-{{ post.id }}');
                             const nextBtn = document.getElementById('next-btn-{{ post.id }}');
-                            
-                            // 처음엔 왼쪽 버튼 숨김
                             if(prevBtn) prevBtn.style.display = 'none';
-                            // 오른쪽 버튼은 보임
                             if(nextBtn) nextBtn.style.display = 'flex';
                         });
                     </script>
@@ -204,13 +250,26 @@
             <div class="comment-list" id="comment-list-{{ post.id }}">
                 {% for comment in post.comments.all %}
                     {% if not comment.parent %}
-                        <div class="comment-item">
-                            <span style="font-weight: 600;">{{ comment.author.username }}</span> {{ comment.content }}
+                        <div class="comment-item" id="comment-{{ comment.id }}">
+                            <span style="font-weight: 600;">{{ comment.author.username }}</span> 
+                            <span class="comment-text">{{ comment.content }}</span>
+                            
+                            {% if comment.author == user %}
+                                <span class="comment-actions" onclick="updateComment({{ comment.id }})">수정</span>
+                                <span class="comment-actions" onclick="deleteComment({{ comment.id }})">삭제</span>
+                            {% endif %}
+
                             <button class="reply-btn" onclick="prepareReply({{ post.id }}, {{ comment.id }}, '{{ comment.author.username }}')">답글 달기</button>
+                            
                             <div id="replies-{{ comment.id }}">
                                 {% for reply in comment.replies.all %}
-                                    <div class="reply-item">
-                                        <span style="font-weight: 600;">{{ reply.author.username }}</span> {{ reply.content }}
+                                    <div class="reply-item" id="comment-{{ reply.id }}">
+                                        <span style="font-weight: 600;">{{ reply.author.username }}</span> 
+                                        <span class="comment-text">{{ reply.content }}</span>
+                                        {% if reply.author == user %}
+                                            <span class="comment-actions" onclick="updateComment({{ reply.id }})">수정</span>
+                                            <span class="comment-actions" onclick="deleteComment({{ reply.id }})">삭제</span>
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
@@ -232,6 +291,10 @@
 <div id="story-modal">
     <button onclick="closeStoryModal()" style="position:absolute; top:20px; right:20px; color:white; background:none; border:none; font-size:40px; cursor:pointer; z-index:10001;">&times;</button>
     
+    <div class="story-progress-container">
+        <div id="story-progress-bar" class="story-progress-bar"></div>
+    </div>
+
     <div class="story-viewer-wrapper">
         <button class="story-nav-btn story-prev" id="story-prev-btn" onclick="prevStory()">&lt;</button>
         <img id="story-img-view" src="">
@@ -242,13 +305,36 @@
 </div>
 
 <script>
-    // 1. 스토리 관련 로직
+    // ==========================================
+    // 1. 스토리 로직 (자동 넘김 + 진행바)
+    // ==========================================
     const storyData = {{ story_json|safe }};
     let currentStoryUser = null; 
     let currentStoryIndex = 0;   
+    let storyTimer = null; 
+
+    function startStoryTimer() {
+        // 기존 타이머 초기화
+        clearTimeout(storyTimer);
+        
+        // 진행바 애니메이션 리셋 (클래스 뺐다 끼우기)
+        const bar = document.getElementById('story-progress-bar');
+        if (bar) {
+            bar.classList.remove('animating');
+            void bar.offsetWidth; // 리플로우 강제 (애니메이션 재시작 핵심)
+            bar.classList.add('animating');
+        }
+
+        // 3초 뒤 다음 스토리로 이동
+        storyTimer = setTimeout(nextStory, 3000); 
+    }
 
     function closeStoryModal() {
         document.getElementById('story-modal').style.display = 'none';
+        clearTimeout(storyTimer); // 모달 닫으면 타이머 정지
+        
+        const bar = document.getElementById('story-progress-bar');
+        if(bar) bar.classList.remove('animating');
     }
 
     function updateStoryUI() {
@@ -258,6 +344,7 @@
 
         imgView.src = currentStoryUser.items[currentStoryIndex];
 
+        // 버튼 표시 관리
         if (currentStoryUser.items.length <= 1) {
             prevBtn.style.display = 'none';
             nextBtn.style.display = 'none';
@@ -265,6 +352,9 @@
             prevBtn.style.display = (currentStoryIndex === 0) ? 'none' : 'flex';
             nextBtn.style.display = (currentStoryIndex === currentStoryUser.items.length - 1) ? 'none' : 'flex';
         }
+        
+        // ✅ UI 업데이트될 때마다 타이머와 진행바 재시작
+        startStoryTimer();
     }
 
     function prevStory() {
@@ -278,6 +368,9 @@
         if (currentStoryIndex < currentStoryUser.items.length - 1) {
             currentStoryIndex++;
             updateStoryUI();
+        } else {
+            // 마지막 장이면 모달 닫기
+            closeStoryModal();
         }
     }
 
@@ -298,11 +391,13 @@
             info.innerText = currentStoryUser.username;
             
             currentStoryIndex = 0;
-            updateStoryUI();
+            updateStoryUI(); // 여기서 타이머 시작됨
         }
     }
 
-    // 2. 메인 피드 슬라이드
+    // ==========================================
+    // 2. 메인 피드 슬라이드 (기존 유지)
+    // ==========================================
     function scrollFeed(postId, direction) {
         const carousel = document.getElementById(`carousel-${postId}`);
         const width = carousel.offsetWidth;
@@ -330,7 +425,9 @@
         }
     }
 
-    // 3. 댓글/좋아요
+    // ==========================================
+    // 3. 댓글 및 좋아요 로직 (수정/삭제 포함)
+    // ==========================================
     let currentParentId = null;
     function prepareReply(postId, commentId, username) {
         currentParentId = commentId;
@@ -353,13 +450,19 @@
         .then(res => res.json())
         .then(data => {
             const newItem = document.createElement('div');
+            
+            // 내 댓글 UI 구성 (수정/삭제 버튼 포함)
+            const actionsHtml = `<span class="comment-actions" onclick="updateComment(${data.id})">수정</span> <span class="comment-actions" onclick="deleteComment(${data.id})">삭제</span>`;
+            
             if (data.parent_id) {
                 newItem.className = 'reply-item';
-                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> ${data.content}`;
+                newItem.id = `comment-${data.id}`;
+                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> <span class="comment-text">${data.content}</span> ${actionsHtml}`;
                 document.getElementById(`replies-${data.parent_id}`).appendChild(newItem);
             } else {
                 newItem.className = 'comment-item';
-                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> ${data.content} <button class=\"reply-btn\" onclick=\"prepareReply(${postId}, ${data.id}, '${data.username}')\">답글 달기</button><div id=\"replies-${data.id}\"></div>`;
+                newItem.id = `comment-${data.id}`;
+                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> <span class="comment-text">${data.content}</span> ${actionsHtml} <button class="reply-btn" onclick="prepareReply(${postId}, ${data.id}, '${data.username}')">답글 달기</button><div id="replies-${data.id}"></div>`;
                 document.getElementById(`comment-list-${postId}`).appendChild(newItem);
             }
             input.value = '';
@@ -380,6 +483,48 @@
             const count = document.getElementById(`like-count-${postId}`);
             btn.innerHTML = data.is_liked ? '<span style=\"font-size:24px;\">❤️</span>' : '<span style=\"font-size:24px;\">🤍</span>';
             count.innerText = `좋아요 ${data.count}개`;
+        });
+    }
+
+    // ✅ 댓글 삭제 Ajax
+    const deleteComment = (commentId) => {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+        
+        fetch("{% url 'posts:comment_delete_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ comment_id: commentId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.deleted) {
+                const el = document.getElementById(`comment-${commentId}`);
+                if(el) el.remove();
+            } else {
+                alert('삭제 권한이 없습니다.');
+            }
+        });
+    }
+
+    // ✅ 댓글 수정 Ajax
+    const updateComment = (commentId) => {
+        const newContent = prompt("수정할 내용을 입력하세요:");
+        if (!newContent || newContent.trim() === "") return;
+
+        fetch("{% url 'posts:comment_update_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ comment_id: commentId, content: newContent })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.updated) {
+                // DOM에서 텍스트만 업데이트
+                const commentEl = document.querySelector(`#comment-${commentId} .comment-text`);
+                if(commentEl) commentEl.innerText = data.content;
+            } else {
+                alert('수정 권한이 없습니다.');
+            }
         });
     }
 </script>

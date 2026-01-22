@@ -9,12 +9,14 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .models import Post, Comment, Story, PostImage
 from .forms import PostForm, StoryForm
 from django.db.models import Count
+from django.db.models import Q
 
 # 1. 메인 피드
 # posts/views.py
 
 def post_list(request):
     sort = request.GET.get('sort', 'latest') # URL 쿼리스트링에서 정렬 기준 가져오기 (기본값: latest)
+    q = request.GET.get('q', '') # 검색어 가져오기
     
     # 1. 기본 쿼리셋 생성 (최적화 포함)
     # annotate를 미리 해둬야 정렬 시 오류가 없습니다.
@@ -25,7 +27,9 @@ def post_list(request):
         'comments__replies', 
         'comments__replies__author'
     )
-
+    # ✅ [검색 기능] 내용에 검색어가 포함된 글 필터링
+    if q:
+        posts = posts.filter(content__icontains=q)
     # 2. 정렬 조건 적용
     if sort == 'likes':
         # 좋아요 순 (동점일 경우 최신순)
@@ -68,8 +72,43 @@ def post_list(request):
         'story_authors': story_dict.values(),
         'user_has_story': user_has_story,
         'sort': sort, # ✅ 템플릿에서 현재 정렬 상태를 알기 위해 전달 (파란색 표시용)
+        'q': q, # 검색어 템플릿으로 전달
     }
     return render(request, 'posts/post_list.html', ctx)
+
+# 2. 게시글 수정 (New)
+@login_required
+def post_update(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    
+    if post.author != request.user:
+        return redirect('posts:post_list')
+
+    if request.method == 'POST':
+        form = PostForm(request.POST, instance=post)
+        if form.is_valid():
+            form.save()
+            
+            # ✅ 1. 기존 사진 삭제 로직
+            # HTML에서 name='delete_images'로 체크된 이미지 ID 리스트를 받음
+            delete_ids = request.POST.getlist('delete_images')
+            if delete_ids:
+                # 해당 ID의 이미지들을 DB와 파일시스템에서 삭제
+                for img_id in delete_ids:
+                    image = PostImage.objects.filter(pk=img_id, post=post).first()
+                    if image:
+                        image.delete() # 모델 delete 호출 시 파일도 삭제됨 (설정에 따라 다름)
+
+            # ✅ 2. 새 사진 추가 로직
+            new_images = request.FILES.getlist('photos')
+            for image in new_images:
+                PostImage.objects.create(post=post, photo=image)
+
+            return redirect('posts:post_list')
+    else:
+        form = PostForm(instance=post)
+        
+    return render(request, 'posts/post_update.html', {'form': form, 'post': post})
 
 # 2. 스토리 업로드 (멀티 파일 지원)
 @login_required
@@ -146,6 +185,31 @@ def comment_add_ajax(request):
         'content': comment.content,
         'parent_id': parent_id
     })
+
+# 3. 댓글 삭제 (Ajax) (New)
+@login_required
+@require_POST
+def comment_delete_ajax(request):
+    data = json.loads(request.body)
+    comment = get_object_or_404(Comment, pk=data.get('comment_id'))
+    
+    if comment.author == request.user:
+        comment.delete()
+        return JsonResponse({'deleted': True})
+    return JsonResponse({'deleted': False}, status=403)
+
+# 4. 댓글 수정 (Ajax) (New)
+@login_required
+@require_POST
+def comment_update_ajax(request):
+    data = json.loads(request.body)
+    comment = get_object_or_404(Comment, pk=data.get('comment_id'))
+    
+    if comment.author == request.user:
+        comment.content = data.get('content')
+        comment.save()
+        return JsonResponse({'updated': True, 'content': comment.content})
+    return JsonResponse({'updated': False}, status=403)
 
 # 5. 좋아요
 @login_required
