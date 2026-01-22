@@ -112,6 +112,20 @@
         {% endfor %}
     </div>
 
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 15px; max-width: 470px; margin: 0 auto 15px auto; padding-right: 5px;">
+        <a href="?sort=latest" 
+           style="text-decoration: none; margin-right: 10px; font-size: 14px; font-weight: bold; 
+                  color: {% if sort == 'latest' %}#0095f6{% else %}#8e8e8e{% endif %};">
+            최신순
+        </a>
+        <span style="color: #dbdbdb;">|</span>
+        <a href="?sort=likes" 
+           style="text-decoration: none; margin-left: 10px; font-size: 14px; font-weight: bold; 
+                  color: {% if sort == 'likes' %}#0095f6{% else %}#8e8e8e{% endif %};">
+            인기순
+        </a>
+    </div>
+
     {% for post in posts %}
         <div class="post-card">
             <div class="post-header">

@@ -8,23 +8,47 @@ from datetime import timedelta
 from django.core.serializers.json import DjangoJSONEncoder
 from .models import Post, Comment, Story, PostImage
 from .forms import PostForm, StoryForm
+from django.db.models import Count
 
 # 1. 메인 피드
+# posts/views.py
+
 def post_list(request):
-    posts = Post.objects.all().order_by('-created_at').prefetch_related(
-        'images', 'comments', 'comments__author', 'comments__replies', 'comments__replies__author'
+    sort = request.GET.get('sort', 'latest') # URL 쿼리스트링에서 정렬 기준 가져오기 (기본값: latest)
+    
+    # 1. 기본 쿼리셋 생성 (최적화 포함)
+    # annotate를 미리 해둬야 정렬 시 오류가 없습니다.
+    posts = Post.objects.annotate(like_count=Count('like_users')).prefetch_related(
+        'images', 
+        'comments', 
+        'comments__author', 
+        'comments__replies', 
+        'comments__replies__author'
     )
+
+    # 2. 정렬 조건 적용
+    if sort == 'likes':
+        # 좋아요 순 (동점일 경우 최신순)
+        posts = posts.order_by('-like_count', '-created_at')
+    else:
+        # 최신순 (기본)
+        posts = posts.order_by('-created_at')
+    
+    # ---------------------------------------------------------
+    # ❌ 삭제 대상: 아래 코드가 위에서 정렬한 posts를 덮어쓰고 있었습니다!
+    # posts = Post.objects.all().order_by('-created_at')... (이 부분 삭제)
+    # ---------------------------------------------------------
+
+    # --- (아래 스토리 로직은 기존 그대로 유지) ---
     
     # 24시간 내 스토리 가져오기
     one_day_ago = timezone.now() - timedelta(hours=24)
     active_stories = Story.objects.filter(created_at__gte=one_day_ago).select_related('author').order_by('created_at')
     
-    # ✅ [추가] 내가 올린 스토리가 있는지 확인
     user_has_story = False
     if request.user.is_authenticated:
         user_has_story = active_stories.filter(author=request.user).exists()
 
-    # JSON 데이터 생성 (기존 로직 유지)
     story_dict = {}
     for story in active_stories:
         uid = story.author.id
@@ -42,7 +66,8 @@ def post_list(request):
         'posts': posts,
         'story_json': story_json,
         'story_authors': story_dict.values(),
-        'user_has_story': user_has_story, # ✅ 템플릿으로 전달
+        'user_has_story': user_has_story,
+        'sort': sort, # ✅ 템플릿에서 현재 정렬 상태를 알기 위해 전달 (파란색 표시용)
     }
     return render(request, 'posts/post_list.html', ctx)
 
