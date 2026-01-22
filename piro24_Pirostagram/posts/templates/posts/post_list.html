@@ -15,62 +15,57 @@
     .story-ring img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid white; object-fit: cover; background: white; }
     .story-username { font-size: 12px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center; }
 
-    /* 내 스토리 추가 버튼 스타일 */
     .add-story-btn { position: absolute; bottom: 0; right: 0; background: #0095f6; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; font-size: 16px; border: 2px solid white; font-weight: bold; }
 
     /* 게시글 카드 */
     .post-card { background: white; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 20px; }
     .post-header { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; }
     
-    /* ✅ 이미지 캐러셀 및 네비게이션 스타일 */
+    /* 이미지 캐러셀 */
     .carousel-wrapper { position: relative; width: 100%; background: black; }
-    
-    .post-image-carousel { 
-        display: flex; 
-        overflow-x: auto; 
-        scroll-snap-type: x mandatory; 
-        scrollbar-width: none; 
-        scroll-behavior: smooth; /* 부드러운 스크롤 */
-    }
+    .post-image-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth; }
     .post-image-carousel::-webkit-scrollbar { display: none; }
-    
     .post-image-item { min-width: 100%; scroll-snap-align: center; display: flex; justify-content: center; background: black; }
     .post-image-item img { max-width: 100%; max-height: 600px; object-fit: contain; }
 
-    /* 화살표 버튼 */
-    .feed-nav-btn {
-        position: absolute; top: 50%; transform: translateY(-50%);
-        background: rgba(255, 255, 255, 0.7); border: none; width: 24px; height: 24px; border-radius: 50%;
-        cursor: pointer; font-weight: bold; z-index: 5; display: none; /* JS로 제어 */
-        align-items: center; justify-content: center; font-size: 12px;
-    }
+    /* 피드용 화살표 버튼 */
+    .feed-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.7); border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 5; display: none; align-items: center; justify-content: center; font-size: 12px; }
     .feed-prev { left: 10px; }
     .feed-next { right: 10px; }
 
-    /* 인디케이터 (점) */
-    .feed-indicators {
-        position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-        display: flex; gap: 4px; z-index: 5;
-    }
-    .feed-dot {
-        width: 6px; height: 6px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transition: background 0.2s;
-    }
-    .feed-dot.active {
-        background: #0095f6; /* 활성 상태 파란색 */
-    }
+    /* 피드용 인디케이터 */
+    .feed-indicators { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 5; }
+    .feed-dot { width: 6px; height: 6px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transition: background 0.2s; }
+    .feed-dot.active { background: #0095f6; }
 
-    /* 댓글 및 기타 UI */
+    /* 댓글 등 */
     .comment-list { padding: 0 16px; font-size: 14px; margin-bottom: 10px; }
     .reply-item { margin-left: 20px; color: #666; font-size: 13px; margin-top: 3px; border-left: 2px solid #eee; padding-left: 5px; }
     .reply-btn { border: none; background: none; color: #8e8e8e; font-size: 11px; cursor: pointer; margin-left: 5px; }
-    
     .comment-input-area { border-top: 1px solid #efefef; padding: 10px; display: flex; align-items: center; }
     .comment-input { border: none; flex: 1; outline: none; height: 18px; font-size: 14px; }
     .comment-btn { border: none; background: none; color: #0095f6; font-weight: 600; cursor: pointer; }
 
-    /* 스토리 뷰어 모달 */
+    /* 스토리 뷰어 모달 스타일 */
     #story-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 10000; flex-direction: column; align-items: center; justify-content: center; }
+    .story-viewer-wrapper { position: relative; display: flex; align-items: center; justify-content: center; max-width: 100%; max-height: 80vh; }
     #story-img-view { max-width: 100%; max-height: 80vh; object-fit: contain; }
+
+    .story-nav-btn {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.3); color: white; border: none; 
+        width: 40px; height: 40px; border-radius: 50%; cursor: pointer; 
+        font-size: 20px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+    }
+    .story-nav-btn:hover { background: rgba(255, 255, 255, 0.6); }
+    .story-prev { left: -60px; } 
+    .story-next { right: -60px; }
+
+    @media (max-width: 600px) {
+        .story-prev { left: 10px; background: rgba(0,0,0,0.3); }
+        .story-next { right: 10px; background: rgba(0,0,0,0.3); }
+    }
 </style>
 
 <div class="feed-container">
@@ -83,7 +78,6 @@
                     {% else %}
                         <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
                     {% endif %}
-                    
                     <a href="{% url 'posts:story_create' %}" class="add-story-btn" onclick="event.stopPropagation();" style="text-decoration: none;">+</a>
                 </div>
                 <span class="story-username">내 스토리</span>
@@ -129,7 +123,6 @@
                     {% endif %}
                     {{ post.author.username }}
                 </a>
-                
                 {% if post.author == user %}
                     <form action="{% url 'posts:post_delete' post.pk %}" method="POST" onsubmit="return confirm('삭제하시겠습니까?');">
                         {% csrf_token %}
@@ -152,17 +145,20 @@
                 {% if post.images.count > 1 %}
                     <button class="feed-nav-btn feed-prev" onclick="scrollFeed({{ post.id }}, -1)" id="prev-btn-{{ post.id }}">&lt;</button>
                     <button class="feed-nav-btn feed-next" onclick="scrollFeed({{ post.id }}, 1)" id="next-btn-{{ post.id }}">&gt;</button>
-                    
                     <div class="feed-indicators" id="indicators-{{ post.id }}">
                         {% for image in post.images.all %}
                             <div class="feed-dot {% if forloop.first %}active{% endif %}"></div>
                         {% endfor %}
                     </div>
-                    
                     <script>
                         document.addEventListener("DOMContentLoaded", function() {
                             const prevBtn = document.getElementById('prev-btn-{{ post.id }}');
+                            const nextBtn = document.getElementById('next-btn-{{ post.id }}');
+                            
+                            // 처음엔 왼쪽 버튼 숨김
                             if(prevBtn) prevBtn.style.display = 'none';
+                            // 오른쪽 버튼은 보임
+                            if(nextBtn) nextBtn.style.display = 'flex';
                         });
                     </script>
                 {% endif %}
@@ -197,7 +193,6 @@
                         <div class="comment-item">
                             <span style="font-weight: 600;">{{ comment.author.username }}</span> {{ comment.content }}
                             <button class="reply-btn" onclick="prepareReply({{ post.id }}, {{ comment.id }}, '{{ comment.author.username }}')">답글 달기</button>
-                            
                             <div id="replies-{{ comment.id }}">
                                 {% for reply in comment.replies.all %}
                                     <div class="reply-item">
@@ -217,59 +212,89 @@
                 </div>
             {% endif %}
         </div>
-    {% empty %}
-        <div style="text-align: center; padding: 50px;">게시물이 없습니다.</div>
     {% endfor %}
 </div>
 
 <div id="story-modal">
-    <button onclick="document.getElementById('story-modal').style.display='none'" style="position:absolute; top:20px; right:20px; color:white; background:none; border:none; font-size:40px; cursor:pointer;">&times;</button>
-    <img id="story-img-view" src="">
+    <button onclick="closeStoryModal()" style="position:absolute; top:20px; right:20px; color:white; background:none; border:none; font-size:40px; cursor:pointer; z-index:10001;">&times;</button>
+    
+    <div class="story-viewer-wrapper">
+        <button class="story-nav-btn story-prev" id="story-prev-btn" onclick="prevStory()">&lt;</button>
+        <img id="story-img-view" src="">
+        <button class="story-nav-btn story-next" id="story-next-btn" onclick="nextStory()">&gt;</button>
+    </div>
+
     <div id="story-user-info" style="color: white; margin-top: 10px; font-weight: bold; font-size:18px;"></div>
 </div>
 
 <script>
-    // 1. 스토리 데이터 및 모달 로직
+    // 1. 스토리 관련 로직
     const storyData = {{ story_json|safe }};
+    let currentStoryUser = null; 
+    let currentStoryIndex = 0;   
+
+    function closeStoryModal() {
+        document.getElementById('story-modal').style.display = 'none';
+    }
+
+    function updateStoryUI() {
+        const imgView = document.getElementById('story-img-view');
+        const prevBtn = document.getElementById('story-prev-btn');
+        const nextBtn = document.getElementById('story-next-btn');
+
+        imgView.src = currentStoryUser.items[currentStoryIndex];
+
+        if (currentStoryUser.items.length <= 1) {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+        } else {
+            prevBtn.style.display = (currentStoryIndex === 0) ? 'none' : 'flex';
+            nextBtn.style.display = (currentStoryIndex === currentStoryUser.items.length - 1) ? 'none' : 'flex';
+        }
+    }
+
+    function prevStory() {
+        if (currentStoryIndex > 0) {
+            currentStoryIndex--;
+            updateStoryUI();
+        }
+    }
+
+    function nextStory() {
+        if (currentStoryIndex < currentStoryUser.items.length - 1) {
+            currentStoryIndex++;
+            updateStoryUI();
+        }
+    }
 
     function openStoryModal(username) {
-        let targetUser = null;
+        currentStoryUser = null;
         for (const uid in storyData) {
             if (storyData[uid].username === username) {
-                targetUser = storyData[uid];
+                currentStoryUser = storyData[uid];
                 break;
             }
         }
 
-        if (targetUser && targetUser.items.length > 0) {
+        if (currentStoryUser && currentStoryUser.items.length > 0) {
             const modal = document.getElementById('story-modal');
-            const imgView = document.getElementById('story-img-view');
             const info = document.getElementById('story-user-info');
             
             modal.style.display = 'flex';
-            imgView.src = targetUser.items[0]; 
-            info.innerText = targetUser.username;
-
-            let idx = 0;
-            imgView.onclick = function() {
-                idx++;
-                if (idx < targetUser.items.length) {
-                    imgView.src = targetUser.items[idx];
-                } else {
-                    modal.style.display = 'none';
-                }
-            }
+            info.innerText = currentStoryUser.username;
+            
+            currentStoryIndex = 0;
+            updateStoryUI();
         }
     }
 
-    // 2. ✅ 메인 피드 이미지 슬라이드(화살표) 로직
+    // 2. 메인 피드 슬라이드
     function scrollFeed(postId, direction) {
         const carousel = document.getElementById(`carousel-${postId}`);
         const width = carousel.offsetWidth;
         carousel.scrollBy({ left: direction * width, behavior: 'smooth' });
     }
 
-    // 3. ✅ 스크롤 시 인디케이터 동기화 및 버튼 표시 관리
     function updateIndicators(postId) {
         const carousel = document.getElementById(`carousel-${postId}`);
         const indicators = document.querySelectorAll(`#indicators-${postId} .feed-dot`);
@@ -278,23 +303,20 @@
         
         if (!indicators.length) return;
 
-        // 현재 페이지 계산
         const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
         
-        // 점 활성화 상태 변경
         indicators.forEach((dot, idx) => {
             if (idx === index) dot.classList.add('active');
             else dot.classList.remove('active');
         });
 
-        // 화살표 버튼 숨김/표시
         if (prevBtn && nextBtn) {
             prevBtn.style.display = (index === 0) ? 'none' : 'flex';
             nextBtn.style.display = (index === indicators.length - 1) ? 'none' : 'flex';
         }
     }
 
-    // 4. 댓글 및 좋아요 로직
+    // 3. 댓글/좋아요
     let currentParentId = null;
     function prepareReply(postId, commentId, username) {
         currentParentId = commentId;
