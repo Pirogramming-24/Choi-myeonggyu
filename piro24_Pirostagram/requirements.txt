@@ -1,0 +1,5 @@
+Django>=5.0
+Pillow          # 이미지 처리 필수
+gunicorn        # 배포 시 사용할 WSGI 서버
+psycopg2-binary # (선택) PostgreSQL 사용 시 필요, SQLite만 쓸거면 제외 가능
+django-extensions # (선택) 개발 편의용

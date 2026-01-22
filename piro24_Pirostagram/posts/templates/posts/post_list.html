@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 인스타 스타일용 CSS */
+    body { background-color: #fafafa; }
+    .feed-container { max-width: 470px; margin: 0 auto; padding-top: 30px; }
+    
+    /* 스토리 UI */
+    .story-section { background: white; border: 1px solid #dbdbdb; border-radius: 8px; padding: 16px 0; margin-bottom: 24px; display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; min-height: 85px; align-items: center; padding-left: 15px; }
+    .story-section::-webkit-scrollbar { display: none; }
+    
+    .story-item { display: flex; flex-direction: column; align-items: center; width: 66px; flex-shrink: 0; cursor: pointer; }
+    .story-ring { width: 56px; height: 56px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); position: relative; }
+    .story-ring img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid white; object-fit: cover; background: white; }
+    .story-username { font-size: 12px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center; }
+
+    /* 내 스토리 추가 버튼 스타일 */
+    .add-story-btn { position: absolute; bottom: 0; right: 0; background: #0095f6; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; font-size: 16px; border: 2px solid white; font-weight: bold; }
+
+    /* 게시글 카드 */
+    .post-card { background: white; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 20px; }
+    .post-header { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; }
+    
+    /* ✅ 이미지 캐러셀 및 네비게이션 스타일 */
+    .carousel-wrapper { position: relative; width: 100%; background: black; }
+    
+    .post-image-carousel { 
+        display: flex; 
+        overflow-x: auto; 
+        scroll-snap-type: x mandatory; 
+        scrollbar-width: none; 
+        scroll-behavior: smooth; /* 부드러운 스크롤 */
+    }
+    .post-image-carousel::-webkit-scrollbar { display: none; }
+    
+    .post-image-item { min-width: 100%; scroll-snap-align: center; display: flex; justify-content: center; background: black; }
+    .post-image-item img { max-width: 100%; max-height: 600px; object-fit: contain; }
+
+    /* 화살표 버튼 */
+    .feed-nav-btn {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.7); border: none; width: 24px; height: 24px; border-radius: 50%;
+        cursor: pointer; font-weight: bold; z-index: 5; display: none; /* JS로 제어 */
+        align-items: center; justify-content: center; font-size: 12px;
+    }
+    .feed-prev { left: 10px; }
+    .feed-next { right: 10px; }
+
+    /* 인디케이터 (점) */
+    .feed-indicators {
+        position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+        display: flex; gap: 4px; z-index: 5;
+    }
+    .feed-dot {
+        width: 6px; height: 6px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transition: background 0.2s;
+    }
+    .feed-dot.active {
+        background: #0095f6; /* 활성 상태 파란색 */
+    }
+
+    /* 댓글 및 기타 UI */
+    .comment-list { padding: 0 16px; font-size: 14px; margin-bottom: 10px; }
+    .reply-item { margin-left: 20px; color: #666; font-size: 13px; margin-top: 3px; border-left: 2px solid #eee; padding-left: 5px; }
+    .reply-btn { border: none; background: none; color: #8e8e8e; font-size: 11px; cursor: pointer; margin-left: 5px; }
+    
+    .comment-input-area { border-top: 1px solid #efefef; padding: 10px; display: flex; align-items: center; }
+    .comment-input { border: none; flex: 1; outline: none; height: 18px; font-size: 14px; }
+    .comment-btn { border: none; background: none; color: #0095f6; font-weight: 600; cursor: pointer; }
+
+    /* 스토리 뷰어 모달 */
+    #story-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 10000; flex-direction: column; align-items: center; justify-content: center; }
+    #story-img-view { max-width: 100%; max-height: 80vh; object-fit: contain; }
+</style>
+
+<div class="feed-container">
+    <div class="story-section">
+        {% if user_has_story %}
+            <div class="story-item" onclick="openStoryModal('{{ user.username }}')">
+                <div class="story-ring"> 
+                    {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}">
+                    {% else %}
+                        <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
+                    {% endif %}
+                </div>
+                <span class="story-username">내 스토리</span>
+            </div>
+        {% else %}
+            <div class="story-item" onclick="location.href='{% url 'posts:story_create' %}'">
+                <div class="story-ring" style="background: none; border: 1px solid #dbdbdb;">
+                    {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}">
+                    {% else %}
+                        <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
+                    {% endif %}
+                    <div class="add-story-btn">+</div>
+                </div>
+                <span class="story-username">내 스토리</span>
+            </div>
+        {% endif %}
+
+        {% for data in story_authors %}
+            {% if data.username != user.username %}
+            <div class="story-item" onclick="openStoryModal('{{ data.username }}')">
+                <div class="story-ring">
+                    {% if data.profile_image %}
+                        <img src="{{ data.profile_image }}">
+                    {% else %}
+                        <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
+                    {% endif %}
+                </div>
+                <span class="story-username">{{ data.username }}</span>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% for post in posts %}
+        <div class="post-card">
+            <div class="post-header">
+                <a href="{% url 'users:profile' post.author.username %}" style="display:flex; align-items:center; text-decoration:none; color:black; font-weight:600;">
+                    {% if post.author.profile_photo %}
+                        <img src="{{ post.author.profile_photo.url }}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; border: 1px solid #dbdbdb;">
+                    {% else %}
+                        <div style="width: 32px; height: 32px; background: #eee; border-radius: 50%; margin-right: 10px;"></div>
+                    {% endif %}
+                    {{ post.author.username }}
+                </a>
+                
+                {% if post.author == user %}
+                    <form action="{% url 'posts:post_delete' post.pk %}" method="POST" onsubmit="return confirm('삭제하시겠습니까?');">
+                        {% csrf_token %}
+                        <button style="border:none; background:none; cursor:pointer;">🗑️</button>
+                    </form>
+                {% endif %}
+            </div>
+
+            <div class="carousel-wrapper" id="wrapper-{{ post.id }}">
+                <div class="post-image-carousel" id="carousel-{{ post.id }}" onscroll="updateIndicators({{ post.id }})">
+                    {% for image in post.images.all %}
+                        <div class="post-image-item">
+                            <img src="{{ image.photo.url }}">
+                        </div>
+                    {% empty %}
+                        <div style="padding:50px; color:white; width:100%; text-align:center;">이미지 없음</div>
+                    {% endfor %}
+                </div>
+
+                {% if post.images.count > 1 %}
+                    <button class="feed-nav-btn feed-prev" onclick="scrollFeed({{ post.id }}, -1)" id="prev-btn-{{ post.id }}">&lt;</button>
+                    <button class="feed-nav-btn feed-next" onclick="scrollFeed({{ post.id }}, 1)" id="next-btn-{{ post.id }}">&gt;</button>
+                    
+                    <div class="feed-indicators" id="indicators-{{ post.id }}">
+                        {% for image in post.images.all %}
+                            <div class="feed-dot {% if forloop.first %}active{% endif %}"></div>
+                        {% endfor %}
+                    </div>
+                    
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const prevBtn = document.getElementById('prev-btn-{{ post.id }}');
+                            if(prevBtn) prevBtn.style.display = 'none';
+                        });
+                    </script>
+                {% endif %}
+            </div>
+
+            <div style="padding: 10px; display: flex;">
+                <button style="background:none; border:none; cursor:pointer; margin-right:10px;" id="like-btn-{{ post.id }}" onclick="{% if user.is_authenticated %}likeAjax({{ post.id }}){% else %}alert('로그인 필요'){% endif %}">
+                    {% if user in post.like_users.all %}
+                        <span style="font-size:24px;">❤️</span>
+                    {% else %}
+                        <span style="font-size:24px;">🤍</span>
+                    {% endif %}
+                </button>
+                <button style="background:none; border:none; cursor:pointer;" onclick="document.getElementById('comment-input-{{ post.id }}').focus()">
+                    <span style="font-size:24px;">💬</span>
+                </button>
+            </div>
+
+            <div style="padding: 0 16px;">
+                <div id="like-count-{{ post.id }}" style="font-weight: bold; margin-bottom: 5px;">좋아요 {{ post.like_users.count }}개</div>
+                <div style="margin-bottom: 5px;">
+                    <span style="font-weight: 600;">{{ post.author.username }}</span> {{ post.content }}
+                </div>
+                <small style="color:#8e8e8e; font-size:10px;">{{ post.created_at|date:"Y년 m월 d일" }}</small>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #efefef; margin: 10px 0;">
+
+            <div class="comment-list" id="comment-list-{{ post.id }}">
+                {% for comment in post.comments.all %}
+                    {% if not comment.parent %}
+                        <div class="comment-item">
+                            <span style="font-weight: 600;">{{ comment.author.username }}</span> {{ comment.content }}
+                            <button class="reply-btn" onclick="prepareReply({{ post.id }}, {{ comment.id }}, '{{ comment.author.username }}')">답글 달기</button>
+                            
+                            <div id="replies-{{ comment.id }}">
+                                {% for reply in comment.replies.all %}
+                                    <div class="reply-item">
+                                        <span style="font-weight: 600;">{{ reply.author.username }}</span> {{ reply.content }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if user.is_authenticated %}
+                <div class="comment-input-area">
+                    <input type="text" class="comment-input" id="comment-input-{{ post.id }}" placeholder="댓글 달기...">
+                    <button class="comment-btn" onclick="addComment({{ post.id }})">게시</button>
+                </div>
+            {% endif %}
+        </div>
+    {% empty %}
+        <div style="text-align: center; padding: 50px;">게시물이 없습니다.</div>
+    {% endfor %}
+</div>
+
+<div id="story-modal">
+    <button onclick="document.getElementById('story-modal').style.display='none'" style="position:absolute; top:20px; right:20px; color:white; background:none; border:none; font-size:40px; cursor:pointer;">&times;</button>
+    <img id="story-img-view" src="">
+    <div id="story-user-info" style="color: white; margin-top: 10px; font-weight: bold; font-size:18px;"></div>
+</div>
+
+<script>
+    // 1. 스토리 데이터 및 모달 로직
+    const storyData = {{ story_json|safe }};
+
+    function openStoryModal(username) {
+        let targetUser = null;
+        for (const uid in storyData) {
+            if (storyData[uid].username === username) {
+                targetUser = storyData[uid];
+                break;
+            }
+        }
+
+        if (targetUser && targetUser.items.length > 0) {
+            const modal = document.getElementById('story-modal');
+            const imgView = document.getElementById('story-img-view');
+            const info = document.getElementById('story-user-info');
+            
+            modal.style.display = 'flex';
+            imgView.src = targetUser.items[0]; 
+            info.innerText = targetUser.username;
+
+            let idx = 0;
+            imgView.onclick = function() {
+                idx++;
+                if (idx < targetUser.items.length) {
+                    imgView.src = targetUser.items[idx];
+                } else {
+                    modal.style.display = 'none';
+                }
+            }
+        }
+    }
+
+    // 2. ✅ 메인 피드 이미지 슬라이드(화살표) 로직
+    function scrollFeed(postId, direction) {
+        const carousel = document.getElementById(`carousel-${postId}`);
+        const width = carousel.offsetWidth;
+        carousel.scrollBy({ left: direction * width, behavior: 'smooth' });
+    }
+
+    // 3. ✅ 스크롤 시 인디케이터 동기화 및 버튼 표시 관리
+    function updateIndicators(postId) {
+        const carousel = document.getElementById(`carousel-${postId}`);
+        const indicators = document.querySelectorAll(`#indicators-${postId} .feed-dot`);
+        const prevBtn = document.getElementById(`prev-btn-${postId}`);
+        const nextBtn = document.getElementById(`next-btn-${postId}`);
+        
+        if (!indicators.length) return;
+
+        // 현재 페이지 계산
+        const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+        
+        // 점 활성화 상태 변경
+        indicators.forEach((dot, idx) => {
+            if (idx === index) dot.classList.add('active');
+            else dot.classList.remove('active');
+        });
+
+        // 화살표 버튼 숨김/표시
+        if (prevBtn && nextBtn) {
+            prevBtn.style.display = (index === 0) ? 'none' : 'flex';
+            nextBtn.style.display = (index === indicators.length - 1) ? 'none' : 'flex';
+        }
+    }
+
+    // 4. 댓글 및 좋아요 로직
+    let currentParentId = null;
+    function prepareReply(postId, commentId, username) {
+        currentParentId = commentId;
+        const input = document.getElementById(`comment-input-${postId}`);
+        input.value = '';
+        input.placeholder = `@${username} 님에게 답글 다는 중...`;
+        input.focus();
+    }
+
+    const addComment = (postId) => {
+        const input = document.getElementById(`comment-input-${postId}`);
+        const content = input.value;
+        if (!content.trim()) return;
+
+        fetch("{% url 'posts:comment_add_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ post_id: postId, content: content, parent_id: currentParentId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const newItem = document.createElement('div');
+            if (data.parent_id) {
+                newItem.className = 'reply-item';
+                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> ${data.content}`;
+                document.getElementById(`replies-${data.parent_id}`).appendChild(newItem);
+            } else {
+                newItem.className = 'comment-item';
+                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> ${data.content} <button class=\"reply-btn\" onclick=\"prepareReply(${postId}, ${data.id}, '${data.username}')\">답글 달기</button><div id=\"replies-${data.id}\"></div>`;
+                document.getElementById(`comment-list-${postId}`).appendChild(newItem);
+            }
+            input.value = '';
+            input.placeholder = '댓글 달기...';
+            currentParentId = null;
+        });
+    }
+
+    const likeAjax = (postId) => {
+        fetch("{% url 'posts:like_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({id: postId})
+        })
+        .then(res => res.json())
+        .then(data => {
+            const btn = document.getElementById(`like-btn-${postId}`);
+            const count = document.getElementById(`like-count-${postId}`);
+            btn.innerHTML = data.is_liked ? '<span style=\"font-size:24px;\">❤️</span>' : '<span style=\"font-size:24px;\">🤍</span>';
+            count.innerText = `좋아요 ${data.count}개`;
+        });
+    }
+</script>
+{% endblock %}
