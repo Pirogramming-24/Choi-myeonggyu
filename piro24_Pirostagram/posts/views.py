@@ -10,6 +10,7 @@ from .models import Post, Comment, Story, PostImage
 from .forms import PostForm, StoryForm
 from django.db.models import Count
 from django.db.models import Q
+from django.contrib.auth import get_user_model # 유저 모델 가져오기
 
 # 1. 메인 피드
 # posts/views.py
@@ -37,6 +38,13 @@ def post_list(request):
     else:
         # 최신순 (기본)
         posts = posts.order_by('-created_at')
+
+    # ✅ [추가] 유저 검색 로직
+    User = get_user_model()
+    search_users = None
+    if q:
+        # username에 검색어가 포함된 유저 찾기 (본인 제외)
+        search_users = User.objects.filter(username__icontains=q).exclude(pk=request.user.pk)
     
     # ---------------------------------------------------------
     # ❌ 삭제 대상: 아래 코드가 위에서 정렬한 posts를 덮어쓰고 있었습니다!
@@ -68,13 +76,38 @@ def post_list(request):
 
     ctx = {
         'posts': posts,
-        'story_json': story_json,
+        'search_users': search_users, # ✅ 템플릿으로 전달
+        'story_json': story_json,   
         'story_authors': story_dict.values(),
         'user_has_story': user_has_story,
         'sort': sort, # ✅ 템플릿에서 현재 정렬 상태를 알기 위해 전달 (파란색 표시용)
         'q': q, # 검색어 템플릿으로 전달
     }
     return render(request, 'posts/post_list.html', ctx)
+
+# 2. [NEW] 알림 데이터 반환 (Ajax)
+@login_required
+def notification_ajax(request):
+    # 1. 내가 팔로우한 사람들의 최근 24시간 내 게시글
+    one_day_ago = timezone.now() - timedelta(hours=24)
+    followings = request.user.followings.all() # 팔로잉 목록
+    
+    recent_posts = Post.objects.filter(author__in=followings, created_at__gte=one_day_ago).order_by('-created_at')[:5]
+    
+    notifications = []
+    
+    # 게시글 알림 만들기
+    for post in recent_posts:
+        notifications.append({
+            'type': 'post',
+            'message': f"{post.author.username}님이 새 게시글을 올렸습니다.",
+            'url': f"/users/profile/{post.author.username}/", # 프로필로 이동
+            'img': post.author.profile_photo.url if post.author.profile_photo else None
+        })
+
+    # (스토리 알림도 원하면 추가 가능하지만, 상단바에 있으므로 생략하거나 동일하게 로직 추가)
+    
+    return JsonResponse({'notifications': notifications})
 
 # 2. 게시글 수정 (New)
 @login_required
