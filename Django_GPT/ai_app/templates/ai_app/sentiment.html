@@ -1,0 +1,41 @@
+{% extends 'ai_app/base.html' %}
+
+{% block content %}
+<div class="card p-4 mb-4 border-info">
+    <h2 class="text-info">😊 감정 분석 (Sentiment)</h2>
+    <p class="text-muted">문장의 긍정/부정 여부를 판단합니다.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <textarea name="user_input" class="form-control" rows="3" placeholder="I love coding with Django!" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-info text-white">분석 실행</button>
+    </form>
+
+    {% if result %}
+    <div class="mt-4 p-3 bg-light border rounded">
+        <h4>결과: <span class="text-primary fw-bold">{{ result }}</span></h4>
+    </div>
+    {% endif %}
+</div>
+
+{% if user.is_authenticated %}
+<div class="card p-4">
+    <h4>📜 최근 분석 기록 (History)</h4>
+    <ul class="list-group list-group-flush">
+        {% for history in histories %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>
+                <strong>입력:</strong> {{ history.input_text }} <br>
+                <span class="text-muted small">↪ 결과: {{ history.result_text }}</span>
+            </span>
+            <span class="badge bg-secondary rounded-pill">{{ history.created_at|date:"m/d H:i" }}</span>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted">아직 기록이 없습니다.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

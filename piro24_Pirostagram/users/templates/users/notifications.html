@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width: 600px; margin: 20px auto;">
+    <h3>알림</h3>
+    <ul style="list-style: none; padding: 0;">
+        {% for noti in notis %}
+            <li style="padding: 15px; border-bottom: 1px solid #eee;">
+                {{ noti.message }} 
+                <span style="color: #999; font-size: 0.8em; margin-left: 10px;">{{ noti.created_at|timesince }} 전</span>
+            </li>
+        {% empty %}
+            <li>새로운 알림이 없습니다.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

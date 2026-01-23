@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 프로필 모달 스타일 */
+    #post-detail-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; }
+    .modal-content { display: flex; width: 80%; max-width: 900px; height: 80vh; background: white; border-radius: 5px; overflow: hidden; }
+    
+    /* 이미지 섹션 & 네비게이션 */
+    .modal-img-section { flex: 1.5; background: black; display: flex; align-items: center; justify-content: center; position: relative; }
+    .modal-img-wrapper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+    .modal-img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    /* 화살표 버튼 */
+    .nav-btn { 
+        position: absolute; top: 50%; transform: translateY(-50%); 
+        background: rgba(255, 255, 255, 0.7); border: none; width: 30px; height: 30px; 
+        border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 10; 
+        display: flex; align-items: center; justify-content: center; 
+    }
+    .nav-btn:hover { background: rgba(255, 255, 255, 1); }
+    .prev-btn { left: 10px; }
+    .next-btn { right: 10px; }
+
+    /* 인디케이터 (점) */
+    .indicators { 
+        position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); 
+        display: flex; gap: 6px; z-index: 10; 
+    }
+    .dot { 
+        width: 8px; height: 8px; background: rgba(255, 255, 255, 0.4); 
+        border-radius: 50%; transition: all 0.2s; 
+    }
+    .dot.active { 
+        background: #0095f6; transform: scale(1.2); 
+    }
+
+    /* 정보 섹션 */
+    .modal-info-section { flex: 1; display: flex; flex-direction: column; border-left: 1px solid #efefef; }
+    .modal-header { padding: 15px; border-bottom: 1px solid #efefef; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+    .modal-body { flex: 1; padding: 15px; overflow-y: auto; font-size: 14px; }
+    .modal-footer { padding: 10px; border-top: 1px solid #efefef; }
+</style>
+
+<div style="max-width: 935px; margin: 30px auto;">
+    <div style="display: flex; margin-bottom: 40px; border-bottom: 1px solid #dbdbdb; padding-bottom: 30px;">
+        <div style="flex: 1; text-align: center;">
+            {% if user_info.profile_photo %}
+                <img src="{{ user_info.profile_photo.url }}" style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover;">
+            {% else %}
+                <div style="width: 150px; height: 150px; background: #eee; border-radius: 50%; margin: 0 auto;"></div>
+            {% endif %}
+        </div>
+
+        <div style="flex: 2; padding-left: 30px;">
+            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                <h2 style="font-weight: lighter; margin: 0 20px 0 0;">{{ user_info.username }}</h2>
+                
+                {% if user.is_authenticated and user != user_info %}
+                    <button id="follow-btn" onclick="followAjax({{ user_info.pk }})" 
+                        style="background: {% if user in user_info.followers.all %}#efefef{% else %}#0095f6{% endif %}; 
+                               color: {% if user in user_info.followers.all %}black{% else %}white{% endif %};
+                               border: 1px solid #dbdbdb; padding: 5px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">
+                        {% if user in user_info.followers.all %}팔로우 취소{% else %}팔로우{% endif %}
+                    </button>
+                {% elif user == user_info %}
+                    <button style="border: 1px solid #dbdbdb; background: white; padding: 5px 9px; border-radius: 4px;">프로필 편집</button>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 40px; margin-bottom: 20px;">
+                <span>게시물 <strong>{{ posts.count }}</strong></span>
+                
+                <a href="{% url 'users:follow_list' user_info.pk 'followers' %}" style="text-decoration: none; color: black;">
+                    <span id="follower-count">팔로워 <strong>{{ user_info.followers.count }}</strong></span>
+                </a>
+                
+                <a href="{% url 'users:follow_list' user_info.pk 'followings' %}" style="text-decoration: none; color: black;">
+                    <span>팔로우 <strong>{{ user_info.followings.count }}</strong></span>
+                </a>
+            </div>
+            
+            <p>{{ user_info.intro|default:"소개글이 없습니다." }}</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+        {% for post in posts %}
+            <div style="position: relative; padding-bottom: 100%; overflow: hidden; background: #fafafa; cursor: pointer;" onclick="openPostModal({{ post.pk }})">
+                {% with post.images.first as first_img %}
+                    {% if first_img %}
+                        <img src="{{ first_img.photo.url }}" style="position: absolute; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.2s;">
+                    {% else %}
+                        <div style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: gray;">No Image</div>
+                    {% endif %}
+                {% endwith %}
+                
+                <div style="position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); opacity:0; transition: opacity 0.2s; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                    ❤️ {{ post.like_users.count }}
+                </div>
+            </div>
+        {% empty %}
+            <p>게시물이 없습니다.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="post-detail-modal" onclick="if(event.target === this) closeModal()">
+    <div class="modal-content">
+        <div class="modal-img-section">
+            <div class="modal-img-wrapper">
+                <button class="nav-btn prev-btn" onclick="prevImage()" id="btn-prev">&lt;</button>
+                <img id="modal-img" src="">
+                <button class="nav-btn next-btn" onclick="nextImage()" id="btn-next">&gt;</button>
+                
+                <div class="indicators" id="modal-indicators"></div>
+            </div>
+        </div>
+
+        <div class="modal-info-section">
+            <div class="modal-header">
+                <span id="modal-username"></span>
+                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:20px;">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-comments"></div>
+            <div class="modal-footer">
+                <div id="modal-likes" style="font-weight: bold; margin-bottom: 5px;"></div>
+                <div id="modal-date" style="font-size: 12px; color: #8e8e8e;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 팔로우 Ajax (기존 유지)
+    const followAjax = (userId) => {
+        const url = `/users/follow/${userId}/`; 
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) { alert(data.error); return; }
+            const btn = document.getElementById('follow-btn');
+            const followerCount = document.getElementById('follower-count');
+            if (data.is_followed) {
+                btn.innerText = "팔로우 취소"; btn.style.backgroundColor = "#efefef"; btn.style.color = "black";
+            } else {
+                btn.innerText = "팔로우"; btn.style.backgroundColor = "#0095f6"; btn.style.color = "white";
+            }
+            followerCount.innerHTML = `팔로워 <strong>${data.followers_count}</strong>`;
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // ==========================================
+    // ✅ 모달 이미지 슬라이드 관련 스크립트
+    // ==========================================
+    let currentImages = [];
+    let currentIndex = 0;
+
+    function closeModal() {
+        document.getElementById('post-detail-modal').style.display = 'none';
+        currentImages = [];
+        currentIndex = 0;
+    }
+
+    function updateModalImageDisplay() {
+        const imgEl = document.getElementById('modal-img');
+        const prevBtn = document.getElementById('btn-prev');
+        const nextBtn = document.getElementById('btn-next');
+        const indicators = document.getElementById('modal-indicators');
+
+        // 이미지 변경
+        if(currentImages.length > 0) {
+            imgEl.src = currentImages[currentIndex];
+        }
+
+        // 버튼 표시 여부 (이미지가 1개 이하면 숨김)
+        if (currentImages.length <= 1) {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+        } else {
+            prevBtn.style.display = currentIndex === 0 ? 'none' : 'flex';
+            nextBtn.style.display = currentIndex === currentImages.length - 1 ? 'none' : 'flex';
+        }
+
+        // 인디케이터 업데이트
+        indicators.innerHTML = '';
+        if (currentImages.length > 1) {
+            currentImages.forEach((_, idx) => {
+                const dot = document.createElement('div');
+                dot.className = `dot ${idx === currentIndex ? 'active' : ''}`;
+                indicators.appendChild(dot);
+            });
+        }
+    }
+
+    function prevImage() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateModalImageDisplay();
+        }
+    }
+
+    function nextImage() {
+        if (currentIndex < currentImages.length - 1) {
+            currentIndex++;
+            updateModalImageDisplay();
+        }
+    }
+
+    function openPostModal(postId) {
+        // ✅ [중요] URL 경로 수정 (/posts/detail/ -> /detail/)
+        // config/urls.py에 posts 앱이 루트('')로 연결되어 있으므로 /detail/이 맞습니다.
+        fetch(`/detail/${postId}/`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('post-detail-modal').style.display = 'flex';
+            
+            // 데이터 세팅
+            currentImages = data.images;
+            currentIndex = 0;
+            updateModalImageDisplay(); // 이미지 및 버튼 초기화
+
+            document.getElementById('modal-username').innerText = data.author;
+            document.getElementById('modal-likes').innerText = `좋아요 ${data.like_count}개`;
+            document.getElementById('modal-date').innerText = data.created_at;
+
+            // 댓글 렌더링
+            const body = document.getElementById('modal-comments');
+            body.innerHTML = `<div style="margin-bottom: 15px;"><strong>${data.author}</strong> ${data.content}</div>`;
+            
+            data.comments.forEach(comment => {
+                let repliesHtml = '';
+                comment.replies.forEach(reply => {
+                    repliesHtml += `<div style="margin-left: 20px; font-size: 12px; color: #555; margin-top:3px;">└ <strong>${reply.username}</strong> ${reply.content}</div>`;
+                });
+                body.innerHTML += `<div style="margin-bottom: 10px;"><strong>${comment.username}</strong> ${comment.content}${repliesHtml}</div>`;
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            alert('게시글 정보를 불러오는데 실패했습니다.');
+        });
+    }
+</script>
+{% endblock %}

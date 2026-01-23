@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    # 컨테이너 이름 지정 (선택사항)
+    container_name: pirostagram_server
+    # 로컬 코드 수정 시 컨테이너에 즉시 반영 (핫 리로딩)
+    volumes:
+      - .:/app
+    # 포트 연결 (내컴퓨터:도커내부)
+    ports:
+      - "8000:8000"
+    # 실행 시 DB 마이그레이션 자동 수행 (선택사항)
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"

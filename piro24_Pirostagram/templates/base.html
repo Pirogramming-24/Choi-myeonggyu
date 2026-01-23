@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pirostagram</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 0; padding: 0; background-color: #fafafa; }
+        a { text-decoration: none; color: inherit; }
+
+        /* ✅ 알림 드롭다운 스타일 (필수) */
+        .noti-dropdown {
+            display: none;
+            position: absolute;
+            top: 42px; /* 아이콘 바로 아래 */
+            right: -10px;
+            width: 320px;
+            background: white;
+            border: 1px solid #dbdbdb;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .noti-dropdown.active { display: block; }
+        
+        .noti-item {
+            padding: 12px;
+            border-bottom: 1px solid #efefef;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: black;
+            text-decoration: none;
+        }
+        .noti-item:last-child { border-bottom: none; }
+        .noti-item:hover { background-color: #fafafa; }
+        .noti-img { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; background: #eee; object-fit: cover; border: 1px solid #dbdbdb; }
+        .noti-text { flex: 1; font-size: 13px; line-height: 1.4; }
+        .noti-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: #ed4956;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 5px;
+            font-size: 10px;
+            font-weight: bold;
+            display: none; /* 기본 숨김 */
+            border: 1px solid white;
+        }
+    </style>
+</head>
+<body>
+    
+    <nav style="background: white; border-bottom: 1px solid #dbdbdb; padding: 0 20px; height: 60px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center;">
+        <div style="width: 100%; max-width: 975px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between;">
+            
+            <div style="flex: 1; display: flex; justify-content: flex-start;">
+                <a href="{% url 'posts:post_list' %}" style="font-size: 24px; font-weight: bold; font-family: cursive; text-decoration: none; color: black;">
+                    Pirostagram
+                </a>
+            </div>
+
+            <div style="display: flex; justify-content: center; width: 268px;">
+                <form action="{% url 'posts:post_list' %}" method="GET" style="position: relative; width: 100%;">
+                    <span style="position: absolute; left: 12px; top: 9px; color: #8e8e8e;">
+                        <svg aria-label="검색" color="#8e8e8e" fill="#8e8e8e" height="16" role="img" viewBox="0 0 24 24" width="16">
+                            <path d="M19 10.5A8.5 8.5 0 1110.5 2a8.5 8.5 0 018.5 8.5z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="16.511" x2="22" y1="16.511" y2="22"></line>
+                        </svg>
+                    </span>
+                    <input type="text" name="q" placeholder="검색" value="{{ q|default:'' }}" 
+                           style="background: #efefef; border: none; padding: 10px 10px 10px 36px; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; font-size: 14px;">
+                </form>
+            </div>
+
+            <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 22px;">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'posts:post_list' %}" title="홈" style="color: black;">
+                        <svg aria-label="홈" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                            <path d="M22 10.154v9.646c0 1.21-.99 2.2-2.2 2.2H4.2C2.99 22 2 21.01 2 19.8V10.154c0-.68.32-1.31.86-1.72L12 1.3l9.14 7.134c.54.41.86 1.04.86 1.72z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                    </a>
+                    
+                    <a href="{% url 'posts:post_create' %}" title="새 게시물" style="color: black;">
+                        <svg aria-label="새 게시물" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                            <path d="M2 12v3.45c0 2.849.698 4.005 1.606 4.944.94.909 2.098 1.608 4.946 1.608h6.896c2.848 0 4.006-.7 4.946-1.608C21.302 19.455 22 18.3 22 15.45V8.552c0-2.849-.698-4.006-1.606-4.945C19.454 2.7 18.296 2 15.448 2H8.552c-2.848 0-4.006.699-4.946 1.607C2.698 4.547 2 5.703 2 8.552z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="6.545" x2="17.455" y1="12.001" y2="12.001"></line>
+                            <line fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12.003" x2="12.003" y1="6.545" y2="17.455"></line>
+                        </svg>
+                    </a>
+
+                    <div style="position: relative; cursor: pointer;" onclick="toggleNoti()">
+                        <svg aria-label="활동 피드" color="#262626" fill="#262626" height="24" role="img" viewBox="0 0 24 24" width="24">
+                            <path d="M16.792 3.904A4.989 4.989 0 0121.5 9.122c0 3.072-2.652 4.959-5.197 7.222-2.512 2.243-3.865 3.469-4.303 3.752-.477-.305-2.143-1.823-4.303-3.752C5.141 14.072 2.5 12.25 2.5 9.122a4.989 4.989 0 014.708-5.218 4.21 4.21 0 013.675 1.941c.84 1.175.98 1.763 1.12 1.763s.278-.588 1.11-1.766a4.17 4.17 0 013.679-1.938z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        
+                        <span id="noti-badge" class="noti-badge">0</span>
+                        
+                        <div id="noti-dropdown" class="noti-dropdown">
+                            <div style="padding:15px; text-align:center; color:#888;">로딩중...</div>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'users:profile' user.username %}" title="내 프로필">
+                        {% if user.profile_photo %}
+                            <img src="{{ user.profile_photo.url }}" style="width: 24px; height: 24px; border-radius: 50%; border: 1px solid #dbdbdb; object-fit: cover;">
+                        {% else %}
+                            <div style="width: 24px; height: 24px; border-radius: 50%; background: #dbdbdb;"></div>
+                        {% endif %}
+                    </a>
+
+                    <a href="{% url 'users:logout' %}" style="font-size: 14px; font-weight: bold; color: #0095f6; margin-left: 5px;">
+                        로그아웃
+                    </a>
+                {% else %}
+                    <a href="{% url 'users:login' %}" style="background-color: #0095f6; color: white; padding: 6px 15px; border-radius: 4px; font-weight: bold; font-size: 14px; text-decoration: none;">로그인</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}
+    {% endblock %}
+
+    <script>
+    // 1. 페이지 로드 시 알림 개수 확인
+        document.addEventListener("DOMContentLoaded", function() {
+            checkNotificationCount();
+            // 5초마다 갱신하고 싶다면 아래 주석 해제 (실시간 느낌)
+            // setInterval(checkNotificationCount, 5000); 
+        });
+
+        function checkNotificationCount() {
+            fetch("{% url 'posts:notification_ajax' %}")
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.getElementById('noti-badge');
+                if (data.unread_count > 0) {
+                    badge.style.display = 'block';
+                    badge.innerText = data.unread_count > 9 ? '9+' : data.unread_count;
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleNoti() {
+            const dropdown = document.getElementById('noti-dropdown');
+            const badge = document.getElementById('noti-badge');
+            const isActive = dropdown.classList.contains('active');
+            
+            if (!isActive) {
+                // 1. 드롭다운 열기
+                dropdown.classList.add('active');
+                
+                // 2. 데이터 가져오기
+                fetch("{% url 'posts:notification_ajax' %}")
+                .then(res => res.json())
+                .then(data => {
+                    dropdown.innerHTML = '';
+                    if (data.notifications.length === 0) {
+                        dropdown.innerHTML = '<div style="padding:15px; text-align:center; font-size:13px; color:#888;">새로운 알림이 없습니다.</div>';
+                    } else {
+                        data.notifications.forEach(noti => {
+                            const imgHtml = noti.img ? `<img src="${noti.img}" class="noti-img">` : `<div class="noti-img"></div>`;
+                            // 읽지 않은 알림은 배경색 살짝 다르게 표시 가능
+                            const bgStyle = noti.is_read ? '' : 'background-color: #f0f8ff;';
+                            dropdown.innerHTML += `
+                                <a href="${noti.url}" class="noti-item" style="${bgStyle}">
+                                    ${imgHtml}
+                                    <span class="noti-text">${noti.message}</span>
+                                </a>
+                            `;
+                        });
+                    }
+                });
+
+                // 3. 읽음 처리 요청 (배지 삭제)
+                fetch("{% url 'posts:notification_read_ajax' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                }).then(() => {
+                    badge.style.display = 'none'; // 배지 즉시 숨김
+                });
+
+            } else {
+                dropdown.classList.remove('active');
+            }
+        }
+
+        // 알림창 외부 클릭 시 닫기
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('noti-dropdown');
+            // 클릭한 요소가 드롭다운 내부가 아니고, 하트 아이콘(또는 그 내부 svg)도 아닐 때
+            if (dropdown && dropdown.classList.contains('active')) {
+                const bellIcon = e.target.closest('div[onclick="toggleNoti()"]');
+                if (!dropdown.contains(e.target) && !bellIcon) {
+                    dropdown.classList.remove('active');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

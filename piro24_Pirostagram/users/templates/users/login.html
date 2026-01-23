@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 350px; margin: 50px auto; background: white; padding: 20px; border: 1px solid #dbdbdb; text-align: center;">
+    <h1 class="logo">Pirostagram</h1>
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div style="text-align: left; margin-bottom: 10px;">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" style="width: 100%; padding: 5px; background-color: #0095f6; color: white; border: none; border-radius: 4px; cursor: pointer;">로그인</button>
+    </form>
+    <p style="margin-top: 20px;">
+        계정이 없으신가요? <a href="{% url 'users:signup' %}" style="color: #0095f6; text-decoration: none;">가입하기</a>
+    </p>
+</div>
+{% endblock %}

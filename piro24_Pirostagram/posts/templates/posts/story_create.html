@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 50px auto; background: white; border: 1px solid #dbdbdb; border-radius: 8px; overflow: hidden;">
+    <div style="padding: 15px; border-bottom: 1px solid #dbdbdb; text-align: center; font-weight: bold;">스토리 업로드</div>
+    
+    <form method="POST" action="" enctype="multipart/form-data" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+        {% csrf_token %}
+        <label for="id_image" id="drop-zone" style="cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 200px; border: 2px dashed #ccc; border-radius: 10px; color: #8e8e8e; transition: 0.2s;">
+            <span style="font-size: 30px; margin-bottom: 10px;">📸</span>
+            <span>사진들을 여기에 드래그하거나<br>클릭하세요 (여러 장 가능)</span>
+        </label>
+        
+        <input type="file" name="photos" id="id_image" multiple accept="image/*" style="display: none;">
+        
+        <div id="preview-container" style="display: flex; gap: 5px; overflow-x: auto; height: 70px; align-items: center;"></div>
+        
+        <button type="submit" style="background-color: #0095f6; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer;">올리기</button>
+    </form>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('id_image');
+    const container = document.getElementById('preview-container');
+
+    // 클릭 시 파일 선택창 열기
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // 드래그 중일 때 효과
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '#eef7ff';
+        dropZone.style.borderColor = '#0095f6';
+    });
+
+    // 드래그 떠날 때 효과
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = 'white';
+        dropZone.style.borderColor = '#ccc';
+    });
+
+    // 드롭 시 파일 처리
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = 'white';
+        dropZone.style.borderColor = '#ccc';
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files; // input에 파일 할당
+            showPreview(fileInput.files);
+        }
+    });
+
+    // 파일 선택 시 미리보기 실행
+    fileInput.addEventListener('change', () => showPreview(fileInput.files));
+
+    function showPreview(files) {
+        container.innerHTML = ''; // 초기화
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '60px'; img.style.height = '60px'; img.style.objectFit = 'cover'; img.style.borderRadius = '4px'; img.style.border = '1px solid #ddd';
+                container.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+</script>
+{% endblock %}

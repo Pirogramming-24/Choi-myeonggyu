@@ -1,0 +1,57 @@
+{% extends 'ai_app/base.html' %}
+
+{% block content %}
+<div class="card p-4 border-warning">
+    <h2 class="text-warning">🔥 챌린지: 요약 + 번역 (Pipeline)</h2>
+    <p class="text-muted">긴 영어 기사를 입력하면 <strong>요약(Summary)</strong>한 뒤 <strong>한글로 번역(Translation)</strong>해줍니다.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">영어 텍스트 입력 (뉴스 기사 등)</label>
+            <textarea name="user_input" class="form-control" rows="6" placeholder="Paste a long English text here..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-warning">🚀 실행 (Summarize & Translate)</button>
+    </form>
+
+    {% if result %}
+    <div class="mt-4 p-4 bg-light border rounded">
+        <h4>📊 처리 결과</h4>
+        
+        <div class="mb-3">
+            <label class="fw-bold text-secondary">1단계: 영어 요약 (Summarized)</label>
+            <div class="p-2 bg-white border rounded">
+                {{ result.summary }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="fw-bold text-primary">2단계: 한글 번역 (Translated)</label>
+            <div class="p-3 bg-primary text-white rounded shadow-sm">
+                {{ result.translation }}
+            </div>
+        </div>
+    </div>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        <input type="hidden" name="user_input" value="{{ result.original }}">
+        <button type="submit" class="btn btn-secondary btn-sm">🔄 같은 내용으로 재생성</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card p-4">
+    <h4>📜 최근 요약 기록</h4>
+    <ul class="list-group list-group-flush">
+        {% for history in histories %}
+        <li class="list-group-item">
+            <div class="text-truncate" style="max-width: 500px;"><strong>Q:</strong> {{ history.input_text }}</div>
+            <div class="text-primary mt-1"><strong>A:</strong> {{ history.result_text }}</div>
+            <small class="text-muted">{{ history.created_at|date:"Y-m-d H:i" }}</small>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted">기록이 없습니다.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

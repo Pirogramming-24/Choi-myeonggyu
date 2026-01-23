@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 20px auto;">
+    <h3>{{ title }}</h3>
+    <ul style="list-style: none; padding: 0;">
+        {% for u in users %}
+            <li style="border-bottom: 1px solid #eee; padding: 10px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center;">
+                    {% if u.profile_photo %}
+                        <img src="{{ u.profile_photo.url }}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px;">
+                    {% else %}
+                        <div style="width: 40px; height: 40px; background: #eee; border-radius: 50%; margin-right: 10px;"></div>
+                    {% endif %}
+                    
+                    <a href="{% url 'users:profile' u.username %}" style="text-decoration: none; color: black; font-weight: bold;">
+                        {{ u.username }}
+                    </a>
+                </div>
+            </li>
+        {% empty %}
+            <p>목록이 비어있습니다.</p>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

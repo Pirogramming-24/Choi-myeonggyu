@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 20px auto; background: white; border: 1px solid #dbdbdb; border-radius: 3px;">
+    <div style="padding: 10px; border-bottom: 1px solid #dbdbdb; text-align: center; font-weight: bold;">
+        새 게시물 만들기
+    </div>
+
+    <form method="POST" action="" enctype="multipart/form-data" style="padding: 20px;">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 20px;">
+            <label for="file-upload" id="drop-zone" 
+                style="cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                       width: 100%; height: 250px; background-color: #fafafa; 
+                       border: 2px dashed #ccc; border-radius: 10px; color: #8e8e8e; transition: all 0.2s;">
+                
+                <span style="font-size: 40px; margin-bottom: 10px;">🖼️</span>
+                <span>사진을 여기에 끌어다 놓거나 클릭하세요</span>
+            </label>
+            
+            <input id="file-upload" type="file" name="photos" multiple accept="image/*" style="display: none;">
+            
+            <div id="preview-container" style="display: flex; gap: 10px; overflow-x: auto; margin-top: 15px; padding: 5px;"></div>
+        </div>
+
+        <div style="border-top: 1px solid #efefef; padding-top: 15px;">
+            {{ form.content }} </div>
+
+        <button type="submit" style="width: 100%; margin-top: 15px; background-color: #0095f6; color: white; border: none; padding: 10px; font-weight: bold; border-radius: 4px; cursor: pointer;">
+            공유하기
+        </button>
+    </form>
+</div>
+
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-upload');
+    const container = document.getElementById('preview-container');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '#eef7ff';
+        dropZone.style.borderColor = '#0095f6';
+        dropZone.style.color = '#0095f6';
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '#fafafa';
+        dropZone.style.borderColor = '#ccc';
+        dropZone.style.color = '#8e8e8e';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.backgroundColor = '#fafafa';
+        dropZone.style.borderColor = '#ccc';
+        dropZone.style.color = '#8e8e8e';
+
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            previewImages(fileInput.files);
+        }
+    });
+
+    fileInput.addEventListener('change', () => previewImages(fileInput.files));
+
+    function previewImages(files) {
+        container.innerHTML = ''; 
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.width = '100px'; img.style.height = '100px'; img.style.objectFit = 'cover'; img.style.borderRadius = '4px'; img.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+                container.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* 인스타 스타일용 CSS */
+    body { background-color: #fafafa; }
+    .feed-container { max-width: 470px; margin: 0 auto; padding-top: 30px; }
+    
+    /* 검색창 스타일 */
+    .search-bar-container { max-width: 470px; margin: 0 auto 20px auto; display: flex; gap: 10px; }
+    .search-input { flex: 1; padding: 8px; border: 1px solid #dbdbdb; border-radius: 3px; background: #fafafa; outline: none; }
+
+    /* 스토리 UI */
+    .story-section { background: white; border: 1px solid #dbdbdb; border-radius: 8px; padding: 16px 0; margin-bottom: 24px; display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; min-height: 85px; align-items: center; padding-left: 15px; }
+    .story-section::-webkit-scrollbar { display: none; }
+    
+    .story-item { display: flex; flex-direction: column; align-items: center; width: 66px; flex-shrink: 0; cursor: pointer; }
+    .story-ring { width: 56px; height: 56px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); position: relative; }
+    .story-ring img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid white; object-fit: cover; background: white; }
+    .story-username { font-size: 12px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center; }
+
+    .add-story-btn { position: absolute; bottom: 0; right: 0; background: #0095f6; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 18px; font-size: 16px; border: 2px solid white; font-weight: bold; }
+
+    /* 게시글 카드 */
+    .post-card { background: white; border: 1px solid #dbdbdb; border-radius: 8px; margin-bottom: 20px; }
+    .post-header { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-bottom: 1px solid #efefef; }
+    .post-header-user { display: flex; align-items: center; text-decoration: none; color: black; font-weight: 600; }
+
+    /* 이미지 캐러셀 */
+    .carousel-wrapper { position: relative; width: 100%; background: black; }
+    .post-image-carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; scroll-behavior: smooth; }
+    .post-image-carousel::-webkit-scrollbar { display: none; }
+    .post-image-item { min-width: 100%; scroll-snap-align: center; display: flex; justify-content: center; background: black; }
+    .post-image-item img { max-width: 100%; max-height: 600px; object-fit: contain; }
+
+    /* 피드용 화살표 버튼 */
+    .feed-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255, 255, 255, 0.7); border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-weight: bold; z-index: 5; display: none; align-items: center; justify-content: center; font-size: 12px; }
+    .feed-prev { left: 10px; }
+    .feed-next { right: 10px; }
+
+    /* 피드용 인디케이터 */
+    .feed-indicators { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; z-index: 5; }
+    .feed-dot { width: 6px; height: 6px; background: rgba(255, 255, 255, 0.4); border-radius: 50%; transition: background 0.2s; }
+    .feed-dot.active { background: #0095f6; }
+
+    /* 댓글 등 */
+    .comment-list { padding: 0 16px; font-size: 14px; margin-bottom: 10px; }
+    .reply-item { margin-left: 20px; color: #666; font-size: 13px; margin-top: 3px; border-left: 2px solid #eee; padding-left: 5px; }
+    .reply-btn { border: none; background: none; color: #8e8e8e; font-size: 11px; cursor: pointer; margin-left: 5px; }
+    
+    /* 댓글 액션 버튼 (수정/삭제) */
+    .comment-actions { font-size: 10px; color: #999; margin-left: 10px; cursor: pointer; }
+    .comment-actions:hover { text-decoration: underline; color: #0095f6; }
+
+    .comment-input-area { border-top: 1px solid #efefef; padding: 10px; display: flex; align-items: center; }
+    .comment-input { border: none; flex: 1; outline: none; height: 18px; font-size: 14px; }
+    .comment-btn { border: none; background: none; color: #0095f6; font-weight: 600; cursor: pointer; }
+
+    /* 스토리 뷰어 모달 스타일 */
+    #story-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 10000; flex-direction: column; align-items: center; justify-content: center; }
+    .story-viewer-wrapper { position: relative; display: flex; align-items: center; justify-content: center; max-width: 100%; max-height: 80vh; }
+    #story-img-view { max-width: 100%; max-height: 80vh; object-fit: contain; }
+
+    .story-nav-btn {
+        position: absolute; top: 50%; transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.3); color: white; border: none; 
+        width: 40px; height: 40px; border-radius: 50%; cursor: pointer; 
+        font-size: 20px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+    }
+    .story-nav-btn:hover { background: rgba(255, 255, 255, 0.6); }
+    .story-prev { left: -60px; } 
+    .story-next { right: -60px; }
+
+    @media (max-width: 600px) {
+        .story-prev { left: 10px; background: rgba(0,0,0,0.3); }
+        .story-next { right: 10px; background: rgba(0,0,0,0.3); }
+    }
+    .story-progress-container {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        z-index: 10002;
+        overflow: hidden;
+    }
+    
+    .story-progress-bar {
+        height: 100%;
+        background: white;
+        width: 0%;
+        /* JS로 클래스 toggle 시 애니메이션 실행 */
+    }
+
+    /* 애니메이션 정의: 3초 동안 0% -> 100% */
+    @keyframes storyProgress {
+        from { width: 0%; }
+        to { width: 100%; }
+    }
+    
+    .animating {
+        animation: storyProgress 3000ms linear forwards;
+    }
+</style>
+
+<div class="feed-container">
+
+    <form action="" method="GET" class="search-bar-container">
+        <input type="text" name="q" class="search-input" placeholder="게시글 내용 검색..." value="{{ q|default:'' }}">
+        <button type="submit" style="border: 1px solid #dbdbdb; background: white; border-radius: 3px; cursor: pointer;">🔍</button>
+    </form>
+
+    <div class="feed-container">
+
+    {% if q and search_users %}
+        <div style="background: white; border: 1px solid #dbdbdb; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <div style="font-weight: bold; color: #8e8e8e; margin-bottom: 10px; font-size: 14px;">사용자 검색 결과</div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for s_user in search_users %}
+                    <a href="{% url 'users:profile' s_user.username %}" style="display: flex; align-items: center; text-decoration: none; color: black;">
+                        {% if s_user.profile_photo %}
+                            <img src="{{ s_user.profile_photo.url }}" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; object-fit: cover;">
+                        {% else %}
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #eee; margin-right: 10px;"></div>
+                        {% endif %}
+                        <div>
+                            <div style="font-weight: 600;">{{ s_user.username }}</div>
+                            <div style="font-size: 12px; color: #8e8e8e;">{{ s_user.name|default:"" }}</div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="story-section">
+        {% if user_has_story %}
+            <div class="story-item" onclick="openStoryModal('{{ user.username }}')">
+                <div class="story-ring"> 
+                    {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}">
+                    {% else %}
+                        <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
+                    {% endif %}
+                    <a href="{% url 'posts:story_create' %}" class="add-story-btn" onclick="event.stopPropagation();" style="text-decoration: none;">+</a>
+                </div>
+                <span class="story-username">내 스토리</span>
+            </div>
+        {% else %}
+            <div class="story-item" onclick="location.href='{% url 'posts:story_create' %}'">
+                <div class="story-ring" style="background: none; border: 1px solid #dbdbdb;">
+                    {% if user.profile_photo %}
+                        <img src="{{ user.profile_photo.url }}">
+                    {% else %}
+                        <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
+                    {% endif %}
+                    <div class="add-story-btn">+</div>
+                </div>
+                <span class="story-username">내 스토리</span>
+            </div>
+        {% endif %}
+
+        {% for data in story_authors %}
+            {% if data.username != user.username %}
+            <div class="story-item" onclick="openStoryModal('{{ data.username }}')">
+                <div class="story-ring">
+                    {% if data.profile_image %}
+                        <img src="{{ data.profile_image }}">
+                    {% else %}
+                        <div style="width:100%; height:100%; background:#eee; border-radius:50%;"></div>
+                    {% endif %}
+                </div>
+                <span class="story-username">{{ data.username }}</span>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 15px; max-width: 470px; margin: 0 auto 15px auto; padding-right: 5px;">
+        <a href="?sort=latest" 
+           style="text-decoration: none; margin-right: 10px; font-size: 14px; font-weight: bold; 
+                  color: {% if sort == 'latest' %}#0095f6{% else %}#8e8e8e{% endif %};">
+            최신순
+        </a>
+        <span style="color: #dbdbdb;">|</span>
+        <a href="?sort=likes" 
+           style="text-decoration: none; margin-left: 10px; font-size: 14px; font-weight: bold; 
+                  color: {% if sort == 'likes' %}#0095f6{% else %}#8e8e8e{% endif %};">
+            인기순
+        </a>
+    </div>
+
+    {% for post in posts %}
+        <div class="post-card">
+            <div class="post-header">
+                <a href="{% url 'users:profile' post.author.username %}" class="post-header-user">
+                    {% if post.author.profile_photo %}
+                        <img src="{{ post.author.profile_photo.url }}" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; border: 1px solid #dbdbdb;">
+                    {% else %}
+                        <div style="width: 32px; height: 32px; background: #eee; border-radius: 50%; margin-right: 10px;"></div>
+                    {% endif %}
+                    {{ post.author.username }}
+                </a>
+                
+                {% if post.author == user %}
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="location.href='{% url 'posts:post_update' post.pk %}'" style="border:none; background:none; cursor:pointer; font-size: 12px; color: #0095f6; font-weight: bold;">수정</button>
+                        
+                        <form action="{% url 'posts:post_delete' post.pk %}" method="POST" onsubmit="return confirm('삭제하시겠습니까?');">
+                            {% csrf_token %}
+                            <button style="border:none; background:none; cursor:pointer; font-size: 12px; color: #ed4956; font-weight: bold;">삭제</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="carousel-wrapper" id="wrapper-{{ post.id }}">
+                <div class="post-image-carousel" id="carousel-{{ post.id }}" onscroll="updateIndicators({{ post.id }})">
+                    {% for image in post.images.all %}
+                        <div class="post-image-item">
+                            <img src="{{ image.photo.url }}">
+                        </div>
+                    {% empty %}
+                        <div style="padding:50px; color:white; width:100%; text-align:center;">이미지 없음</div>
+                    {% endfor %}
+                </div>
+
+                {% if post.images.count > 1 %}
+                    <button class="feed-nav-btn feed-prev" onclick="scrollFeed({{ post.id }}, -1)" id="prev-btn-{{ post.id }}">&lt;</button>
+                    <button class="feed-nav-btn feed-next" onclick="scrollFeed({{ post.id }}, 1)" id="next-btn-{{ post.id }}">&gt;</button>
+                    <div class="feed-indicators" id="indicators-{{ post.id }}">
+                        {% for image in post.images.all %}
+                            <div class="feed-dot {% if forloop.first %}active{% endif %}"></div>
+                        {% endfor %}
+                    </div>
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            const prevBtn = document.getElementById('prev-btn-{{ post.id }}');
+                            const nextBtn = document.getElementById('next-btn-{{ post.id }}');
+                            if(prevBtn) prevBtn.style.display = 'none';
+                            if(nextBtn) nextBtn.style.display = 'flex';
+                        });
+                    </script>
+                {% endif %}
+            </div>
+
+            <div style="padding: 10px; display: flex;">
+                <button style="background:none; border:none; cursor:pointer; margin-right:10px;" id="like-btn-{{ post.id }}" onclick="{% if user.is_authenticated %}likeAjax({{ post.id }}){% else %}alert('로그인 필요'){% endif %}">
+                    {% if user in post.like_users.all %}
+                        <span style="font-size:24px;">❤️</span>
+                    {% else %}
+                        <span style="font-size:24px;">🤍</span>
+                    {% endif %}
+                </button>
+                <button style="background:none; border:none; cursor:pointer;" onclick="document.getElementById('comment-input-{{ post.id }}').focus()">
+                    <span style="font-size:24px;">💬</span>
+                </button>
+            </div>
+
+            <div style="padding: 0 16px;">
+                <div id="like-count-{{ post.id }}" style="font-weight: bold; margin-bottom: 5px;">좋아요 {{ post.like_users.count }}개</div>
+                <div style="margin-bottom: 5px;">
+                    <span style="font-weight: 600;">{{ post.author.username }}</span> {{ post.content }}
+                </div>
+                <small style="color:#8e8e8e; font-size:10px;">{{ post.created_at|date:"Y년 m월 d일" }}</small>
+            </div>
+            
+            <hr style="border: 0; border-top: 1px solid #efefef; margin: 10px 0;">
+
+            <div class="comment-list" id="comment-list-{{ post.id }}">
+                {% for comment in post.comments.all %}
+                    {% if not comment.parent %}
+                        <div class="comment-item" id="comment-{{ comment.id }}">
+                            <span style="font-weight: 600;">{{ comment.author.username }}</span> 
+                            <span class="comment-text">{{ comment.content }}</span>
+                            
+                            {% if comment.author == user %}
+                                <span class="comment-actions" onclick="updateComment({{ comment.id }})">수정</span>
+                                <span class="comment-actions" onclick="deleteComment({{ comment.id }})">삭제</span>
+                            {% endif %}
+
+                            <button class="reply-btn" onclick="prepareReply({{ post.id }}, {{ comment.id }}, '{{ comment.author.username }}')">답글 달기</button>
+                            
+                            <div id="replies-{{ comment.id }}">
+                                {% for reply in comment.replies.all %}
+                                    <div class="reply-item" id="comment-{{ reply.id }}">
+                                        <span style="font-weight: 600;">{{ reply.author.username }}</span> 
+                                        <span class="comment-text">{{ reply.content }}</span>
+                                        {% if reply.author == user %}
+                                            <span class="comment-actions" onclick="updateComment({{ reply.id }})">수정</span>
+                                            <span class="comment-actions" onclick="deleteComment({{ reply.id }})">삭제</span>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {% if user.is_authenticated %}
+                <div class="comment-input-area">
+                    <input type="text" class="comment-input" id="comment-input-{{ post.id }}" placeholder="댓글 달기...">
+                    <button class="comment-btn" onclick="addComment({{ post.id }})">게시</button>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+<div id="story-modal">
+    <button onclick="closeStoryModal()" style="position:absolute; top:20px; right:20px; color:white; background:none; border:none; font-size:40px; cursor:pointer; z-index:10001;">&times;</button>
+    
+    <div class="story-progress-container">
+        <div id="story-progress-bar" class="story-progress-bar"></div>
+    </div>
+
+    <div class="story-viewer-wrapper">
+        <button class="story-nav-btn story-prev" id="story-prev-btn" onclick="prevStory()">&lt;</button>
+        <img id="story-img-view" src="">
+        <button class="story-nav-btn story-next" id="story-next-btn" onclick="nextStory()">&gt;</button>
+    </div>
+
+    <div id="story-user-info" style="color: white; margin-top: 10px; font-weight: bold; font-size:18px;"></div>
+</div>
+
+<script>
+    // ==========================================
+    // 1. 스토리 로직 (자동 넘김 + 진행바)
+    // ==========================================
+    const storyData = {{ story_json|safe }};
+    let currentStoryUser = null; 
+    let currentStoryIndex = 0;   
+    let storyTimer = null; 
+
+    function startStoryTimer() {
+        // 기존 타이머 초기화
+        clearTimeout(storyTimer);
+        
+        // 진행바 애니메이션 리셋 (클래스 뺐다 끼우기)
+        const bar = document.getElementById('story-progress-bar');
+        if (bar) {
+            bar.classList.remove('animating');
+            void bar.offsetWidth; // 리플로우 강제 (애니메이션 재시작 핵심)
+            bar.classList.add('animating');
+        }
+
+        // 3초 뒤 다음 스토리로 이동
+        storyTimer = setTimeout(nextStory, 3000); 
+    }
+
+    function closeStoryModal() {
+        document.getElementById('story-modal').style.display = 'none';
+        clearTimeout(storyTimer); // 모달 닫으면 타이머 정지
+        
+        const bar = document.getElementById('story-progress-bar');
+        if(bar) bar.classList.remove('animating');
+    }
+
+    function updateStoryUI() {
+        const imgView = document.getElementById('story-img-view');
+        const prevBtn = document.getElementById('story-prev-btn');
+        const nextBtn = document.getElementById('story-next-btn');
+
+        imgView.src = currentStoryUser.items[currentStoryIndex];
+
+        // 버튼 표시 관리
+        if (currentStoryUser.items.length <= 1) {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+        } else {
+            prevBtn.style.display = (currentStoryIndex === 0) ? 'none' : 'flex';
+            nextBtn.style.display = (currentStoryIndex === currentStoryUser.items.length - 1) ? 'none' : 'flex';
+        }
+        
+        // ✅ UI 업데이트될 때마다 타이머와 진행바 재시작
+        startStoryTimer();
+    }
+
+    function prevStory() {
+        if (currentStoryIndex > 0) {
+            currentStoryIndex--;
+            updateStoryUI();
+        }
+    }
+
+    function nextStory() {
+        if (currentStoryIndex < currentStoryUser.items.length - 1) {
+            currentStoryIndex++;
+            updateStoryUI();
+        } else {
+            // 마지막 장이면 모달 닫기
+            closeStoryModal();
+        }
+    }
+
+    function openStoryModal(username) {
+        currentStoryUser = null;
+        for (const uid in storyData) {
+            if (storyData[uid].username === username) {
+                currentStoryUser = storyData[uid];
+                break;
+            }
+        }
+
+        if (currentStoryUser && currentStoryUser.items.length > 0) {
+            const modal = document.getElementById('story-modal');
+            const info = document.getElementById('story-user-info');
+            
+            modal.style.display = 'flex';
+            info.innerText = currentStoryUser.username;
+            
+            currentStoryIndex = 0;
+            updateStoryUI(); // 여기서 타이머 시작됨
+        }
+    }
+
+    // ==========================================
+    // 2. 메인 피드 슬라이드 (기존 유지)
+    // ==========================================
+    function scrollFeed(postId, direction) {
+        const carousel = document.getElementById(`carousel-${postId}`);
+        const width = carousel.offsetWidth;
+        carousel.scrollBy({ left: direction * width, behavior: 'smooth' });
+    }
+
+    function updateIndicators(postId) {
+        const carousel = document.getElementById(`carousel-${postId}`);
+        const indicators = document.querySelectorAll(`#indicators-${postId} .feed-dot`);
+        const prevBtn = document.getElementById(`prev-btn-${postId}`);
+        const nextBtn = document.getElementById(`next-btn-${postId}`);
+        
+        if (!indicators.length) return;
+
+        const index = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+        
+        indicators.forEach((dot, idx) => {
+            if (idx === index) dot.classList.add('active');
+            else dot.classList.remove('active');
+        });
+
+        if (prevBtn && nextBtn) {
+            prevBtn.style.display = (index === 0) ? 'none' : 'flex';
+            nextBtn.style.display = (index === indicators.length - 1) ? 'none' : 'flex';
+        }
+    }
+
+    // ==========================================
+    // 3. 댓글 및 좋아요 로직 (수정/삭제 포함)
+    // ==========================================
+    let currentParentId = null;
+    function prepareReply(postId, commentId, username) {
+        currentParentId = commentId;
+        const input = document.getElementById(`comment-input-${postId}`);
+        input.value = '';
+        input.placeholder = `@${username} 님에게 답글 다는 중...`;
+        input.focus();
+    }
+
+    const addComment = (postId) => {
+        const input = document.getElementById(`comment-input-${postId}`);
+        const content = input.value;
+        if (!content.trim()) return;
+
+        fetch("{% url 'posts:comment_add_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ post_id: postId, content: content, parent_id: currentParentId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const newItem = document.createElement('div');
+            
+            // 내 댓글 UI 구성 (수정/삭제 버튼 포함)
+            const actionsHtml = `<span class="comment-actions" onclick="updateComment(${data.id})">수정</span> <span class="comment-actions" onclick="deleteComment(${data.id})">삭제</span>`;
+            
+            if (data.parent_id) {
+                newItem.className = 'reply-item';
+                newItem.id = `comment-${data.id}`;
+                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> <span class="comment-text">${data.content}</span> ${actionsHtml}`;
+                document.getElementById(`replies-${data.parent_id}`).appendChild(newItem);
+            } else {
+                newItem.className = 'comment-item';
+                newItem.id = `comment-${data.id}`;
+                newItem.innerHTML = `<span style="font-weight: 600;">${data.username}</span> <span class="comment-text">${data.content}</span> ${actionsHtml} <button class="reply-btn" onclick="prepareReply(${postId}, ${data.id}, '${data.username}')">답글 달기</button><div id="replies-${data.id}"></div>`;
+                document.getElementById(`comment-list-${postId}`).appendChild(newItem);
+            }
+            input.value = '';
+            input.placeholder = '댓글 달기...';
+            currentParentId = null;
+        });
+    }
+
+    const likeAjax = (postId) => {
+        fetch("{% url 'posts:like_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({id: postId})
+        })
+        .then(res => res.json())
+        .then(data => {
+            const btn = document.getElementById(`like-btn-${postId}`);
+            const count = document.getElementById(`like-count-${postId}`);
+            btn.innerHTML = data.is_liked ? '<span style=\"font-size:24px;\">❤️</span>' : '<span style=\"font-size:24px;\">🤍</span>';
+            count.innerText = `좋아요 ${data.count}개`;
+        });
+    }
+
+    // ✅ 댓글 삭제 Ajax
+    const deleteComment = (commentId) => {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+        
+        fetch("{% url 'posts:comment_delete_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ comment_id: commentId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.deleted) {
+                const el = document.getElementById(`comment-${commentId}`);
+                if(el) el.remove();
+            } else {
+                alert('삭제 권한이 없습니다.');
+            }
+        });
+    }
+
+    // ✅ 댓글 수정 Ajax
+    const updateComment = (commentId) => {
+        const newContent = prompt("수정할 내용을 입력하세요:");
+        if (!newContent || newContent.trim() === "") return;
+
+        fetch("{% url 'posts:comment_update_ajax' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+            body: JSON.stringify({ comment_id: commentId, content: newContent })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.updated) {
+                // DOM에서 텍스트만 업데이트
+                const commentEl = document.querySelector(`#comment-${commentId} .comment-text`);
+                if(commentEl) commentEl.innerText = data.content;
+            } else {
+                alert('수정 권한이 없습니다.');
+            }
+        });
+    }
+</script>
+{% endblock %}
